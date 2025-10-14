@@ -177,21 +177,23 @@ export default function LeadDetail() {
               <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" onClick={() => console.log("Call")}>
-                <Phone className="h-4 w-4 mr-2" />
-                Ligar para Lead
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => console.log("Email")}>
-                <Mail className="h-4 w-4 mr-2" />
-                Enviar E-mail
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => console.log("WhatsApp")}>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => window.open(`https://wa.me/55${mockLead.telefone.replace(/\D/g, '')}`, '_blank', 'noopener,noreferrer')}
+                data-testid="button-whatsapp"
+              >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 WhatsApp
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => console.log("Schedule")}>
-                <Calendar className="h-4 w-4 mr-2" />
-                Agendar Retorno
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => window.location.href = `mailto:${mockLead.email}`}
+                data-testid="button-email"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Enviar E-mail
               </Button>
             </CardContent>
           </Card>
