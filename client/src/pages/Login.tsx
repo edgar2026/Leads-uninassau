@@ -166,7 +166,7 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>E-mail</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="seu@email.com" {...field} />
+                        <Input placeholder="seu@email.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -214,7 +214,7 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>E-mail</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="seu@email.com" {...field} />
+                        <Input placeholder="seu@email.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
