@@ -13,15 +13,16 @@ import LeadsPanel from "@/pages/LeadsPanel";
 import LeadDetail from "@/pages/LeadDetail";
 import Cursos from "@/pages/Cursos";
 import Configuracoes from "@/pages/Configuracoes";
+import UserManagement from "@/pages/UserManagement";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { session, loading } = useAuth();
+  const { session, loading, profile } = useAuth();
   const [location] = useLocation();
 
   if (loading) {
-    return <div>Carregando...</div>; // TODO: Add a proper loading spinner/page
+    return <div className="flex h-screen w-full items-center justify-center">Carregando...</div>;
   }
 
   if (!session && location !== "/login") {
@@ -48,7 +49,10 @@ function Router() {
         <MainLayout><Cursos /></MainLayout>
       </Route>
       <Route path="/configuracoes">
-        <MainLayout><Configuracoes /></MainLayout>
+        {profile?.role === 'Administrador' ? <MainLayout><Configuracoes /></MainLayout> : <Redirect to="/" />}
+      </Route>
+      <Route path="/usuarios">
+        {profile?.role === 'Administrador' ? <MainLayout><UserManagement /></MainLayout> : <Redirect to="/" />}
       </Route>
       <Route>
         <MainLayout><NotFound /></MainLayout>

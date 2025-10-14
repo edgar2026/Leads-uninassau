@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Settings, GraduationCap, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Settings, GraduationCap, LogOut, UserCog } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -19,27 +19,41 @@ const menuItems = [
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+    roles: ["Administrador", "Diretor", "Coordenador", "QG", "Comercial"],
   },
   {
     title: "Meus Leads",
     url: "/leads",
     icon: Users,
+    roles: ["Administrador", "Diretor", "Coordenador", "QG", "Comercial"],
   },
   {
     title: "Cursos",
     url: "/cursos",
     icon: GraduationCap,
+    roles: ["Administrador", "Diretor", "Coordenador", "QG", "Comercial"],
+  },
+  {
+    title: "Gerenciar Usuários",
+    url: "/usuarios",
+    icon: UserCog,
+    roles: ["Administrador"],
   },
   {
     title: "Configurações",
     url: "/configuracoes",
     icon: Settings,
+    roles: ["Administrador"],
   },
 ];
 
 export function AppSidebar() {
   const [location] = useLocation();
   const { profile, signOut } = useAuth();
+
+  const accessibleMenuItems = menuItems.filter(item => 
+    profile?.role && item.roles.includes(profile.role)
+  );
 
   return (
     <Sidebar>
@@ -59,10 +73,10 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {accessibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(" ", "-")}`}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
