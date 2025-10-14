@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -192,7 +193,7 @@ export default function Configuracoes() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <FormLabel>Tema</FormLabel>
+                <Label>Tema</Label>
                 <p className="text-sm text-muted-foreground">
                   Alternar entre modo claro e escuro
                 </p>
@@ -213,14 +214,14 @@ export default function Configuracoes() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <FormLabel>🔥 Quente - Último contato há menos de</FormLabel>
+              <Label>🔥 Quente - Último contato há menos de</Label>
               <div className="flex items-center gap-2">
                 <Input type="number" defaultValue="3" className="w-24" />
                 <span>dias</span>
               </div>
             </div>
             <div className="space-y-2">
-              <FormLabel>🟡 Morno - Último contato entre</FormLabel>
+              <Label>🟡 Morno - Último contato entre</Label>
               <div className="flex items-center gap-2">
                 <Input type="number" defaultValue="3" className="w-24" />
                 <span>e</span>
@@ -229,7 +230,7 @@ export default function Configuracoes() {
               </div>
             </div>
             <div className="space-y-2">
-              <FormLabel>🧊 Frio - Último contato há mais de</FormLabel>
+              <Label>🧊 Frio - Último contato há mais de</Label>
               <div className="flex items-center gap-2">
                 <Input type="number" defaultValue="7" className="w-24" />
                 <span>dias</span>
