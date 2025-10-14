@@ -44,12 +44,9 @@ const signInSchema = z.object({
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 type SignInFormValues = z.infer<typeof signInSchema>;
 
-export default function Login() {
-  const [isSignUp, setIsSignUp] = useState(false);
+function SignUpForm({ onSignUpSuccess }: { onSignUpSuccess: () => void }) {
   const { toast } = useToast();
-
-  // Sign Up Form
-  const signUpForm = useForm<SignUpFormValues>({
+  const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       firstName: "",
@@ -60,7 +57,7 @@ export default function Login() {
     },
   });
 
-  async function onSignUpSubmit(values: SignUpFormValues) {
+  async function onSubmit(values: SignUpFormValues) {
     const { error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -83,12 +80,91 @@ export default function Login() {
         title: "Cadastro realizado!",
         description: "Verifique seu e-mail para confirmar sua conta.",
       });
-      setIsSignUp(false); // Switch to sign in view
+      onSignUpSuccess();
     }
   }
 
-  // Sign In Form
-  const signInForm = useForm<SignInFormValues>({
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome</FormLabel>
+                <FormControl>
+                  <Input placeholder="Seu nome" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sobrenome</FormLabel>
+                <FormControl>
+                  <Input placeholder="Seu sobrenome" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>E-mail</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="seu@email.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Senha</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Repetir Senha</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Cadastrando..." : "Cadastrar"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+function SignInForm() {
+  const { toast } = useToast();
+  const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
@@ -96,7 +172,7 @@ export default function Login() {
     },
   });
 
-  async function onSignInSubmit(values: SignInFormValues) {
+  async function onSubmit(values: SignInFormValues) {
     const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
@@ -109,8 +185,47 @@ export default function Login() {
         variant: "destructive",
       });
     }
-    // onAuthStateChange in App.tsx will handle redirect
   }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>E-mail</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="seu@email.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Senha</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Entrando..." : "Entrar"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+export default function Login() {
+  const [isSignUp, setIsSignUp] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
@@ -128,116 +243,9 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           {isSignUp ? (
-            // Sign Up Form
-            <Form {...signUpForm}>
-              <form onSubmit={signUpForm.handleSubmit(onSignUpSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={signUpForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Seu nome" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signUpForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sobrenome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Seu sobrenome" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={signUpForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input placeholder="seu@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signUpForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Repetir Senha</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={signUpForm.formState.isSubmitting}>
-                  {signUpForm.formState.isSubmitting ? "Cadastrando..." : "Cadastrar"}
-                </Button>
-              </form>
-            </Form>
+            <SignUpForm onSignUpSuccess={() => setIsSignUp(false)} />
           ) : (
-            // Sign In Form
-            <Form {...signInForm}>
-              <form onSubmit={signInForm.handleSubmit(onSignInSubmit)} className="space-y-4">
-                <FormField
-                  control={signInForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input placeholder="seu@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={signInForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={signInForm.formState.isSubmitting}>
-                  {signInForm.formState.isSubmitting ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-            </Form>
+            <SignInForm />
           )}
           <div className="mt-4 text-center text-sm">
             {isSignUp ? "Já tem uma conta?" : "Não tem uma conta?"}{" "}
