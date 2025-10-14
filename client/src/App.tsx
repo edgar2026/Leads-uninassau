@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "@/pages/Dashboard";
 import LeadsPanel from "@/pages/LeadsPanel";
+import LeadDetail from "@/pages/LeadDetail";
 import Cursos from "@/pages/Cursos";
 import Configuracoes from "@/pages/Configuracoes";
 import Login from "@/pages/Login";
@@ -29,6 +30,13 @@ function Router() {
         {() => (
           <MainLayout>
             <LeadsPanel />
+          </MainLayout>
+        )}
+      </Route>
+      <Route path="/lead/:id">
+        {() => (
+          <MainLayout>
+            <LeadDetail />
           </MainLayout>
         )}
       </Route>

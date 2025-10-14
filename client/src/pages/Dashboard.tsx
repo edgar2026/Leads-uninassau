@@ -3,6 +3,8 @@ import { FunnelChart } from "@/components/FunnelChart";
 import { ConversionChart } from "@/components/ConversionChart";
 import { RankingTable } from "@/components/RankingTable";
 import { TemperatureDistribution } from "@/components/TemperatureDistribution";
+import { RecentActivity } from "@/components/RecentActivity";
+import { LeadsByOriginChart } from "@/components/LeadsByOriginChart";
 import { Users, TrendingUp, UserCheck, Clock } from "lucide-react";
 
 // TODO: remove mock functionality
@@ -33,6 +35,21 @@ const mockTempData = [
   { name: "Frio", value: 56, emoji: "🧊" },
 ];
 
+const mockActivities = [
+  { id: "1", tipo: "novo_lead" as const, descricao: "Novo lead: Ana Silva - Administração", usuario: "João Silva", tempo: "5 min" },
+  { id: "2", tipo: "ligacao" as const, descricao: "Ligação com Maria Santos", usuario: "Pedro Costa", tempo: "1 hora" },
+  { id: "3", tipo: "email" as const, descricao: "E-mail enviado para Carlos Oliveira", usuario: "Ana Rodrigues", tempo: "2 horas" },
+  { id: "4", tipo: "reuniao" as const, descricao: "Reunião agendada com Roberto Lima", usuario: "Maria Costa", tempo: "3 horas" },
+];
+
+const mockOriginData = [
+  { origem: "Site", total: 89 },
+  { origem: "Feira", total: 67 },
+  { origem: "Indicação", total: 45 },
+  { origem: "Google Ads", total: 32 },
+  { origem: "Redes Sociais", total: 14 },
+];
+
 export default function Dashboard() {
   return (
     <div className="space-y-8">
@@ -57,9 +74,19 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <ConversionChart data={mockConversionData} vendedores={["João Silva", "Maria Costa", "Pedro Santos"]} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ConversionChart data={mockConversionData} vendedores={["João Silva", "Maria Costa", "Pedro Santos"]} />
+        <LeadsByOriginChart data={mockOriginData} />
+      </div>
 
-      <RankingTable vendedores={mockVendedores} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <RankingTable vendedores={mockVendedores} />
+        </div>
+        <div>
+          <RecentActivity activities={mockActivities} />
+        </div>
+      </div>
     </div>
   );
 }

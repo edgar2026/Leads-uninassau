@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { LeadCard, type Lead } from "@/components/LeadCard";
+import { LeadFormModal } from "@/components/LeadFormModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -76,9 +78,11 @@ const mockLeads: Lead[] = [
 ];
 
 export default function LeadsPanel() {
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [cursoFilter, setCursoFilter] = useState<string>("todos");
+  const [showLeadModal, setShowLeadModal] = useState(false);
 
   const filteredLeads = mockLeads.filter((lead) => {
     const matchesSearch =
@@ -99,7 +103,7 @@ export default function LeadsPanel() {
           <h1 className="text-3xl font-bold" data-testid="text-leads-title">Meus Leads</h1>
           <p className="text-muted-foreground mt-1">Gerencie e acompanhe seus leads</p>
         </div>
-        <Button data-testid="button-add-lead" onClick={() => console.log("Add lead triggered")}>
+        <Button data-testid="button-add-lead" onClick={() => setShowLeadModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Lead
         </Button>
@@ -150,7 +154,7 @@ export default function LeadsPanel() {
             key={lead.id}
             lead={lead}
             onEdit={(l) => console.log("Edit lead:", l)}
-            onView={(l) => console.log("View lead:", l)}
+            onView={(l) => setLocation(`/lead/${l.id}`)}
           />
         ))}
       </div>
@@ -160,6 +164,12 @@ export default function LeadsPanel() {
           <p className="text-muted-foreground">Nenhum lead encontrado</p>
         </div>
       )}
+
+      <LeadFormModal
+        open={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        onSave={(lead) => console.log("Saved lead:", lead)}
+      />
     </div>
   );
 }
