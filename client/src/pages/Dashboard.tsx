@@ -1,6 +1,6 @@
 import { DashboardStat } from "@/components/DashboardStat";
 import { FunnelChart } from "@/components/FunnelChart";
-import { ConversionChartPanel } from "@/components/ConversionChartPanel";
+import { ConversionChart } from "@/components/ConversionChart";
 import { RankingTable } from "@/components/RankingTable";
 import { TemperatureDistribution } from "@/components/TemperatureDistribution";
 import { RecentActivity } from "@/components/RecentActivity";
@@ -8,6 +8,14 @@ import { LeadsByOriginChart } from "@/components/LeadsByOriginChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Users, TrendingUp, UserCheck, Clock } from "lucide-react";
+
+// O gráfico de conversão por período é mais complexo e será implementado futuramente.
+const mockConversionData = [
+  { periodo: "Sem 1", "Vendedor 1": 12, "Vendedor 2": 15 },
+  { periodo: "Sem 2", "Vendedor 1": 15, "Vendedor 2": 18 },
+  { periodo: "Sem 3", "Vendedor 1": 18, "Vendedor 2": 14 },
+  { periodo: "Sem 4", "Vendedor 1": 20, "Vendedor 2": 20 },
+];
 
 export default function Dashboard() {
   const {
@@ -55,7 +63,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ConversionChartPanel />
+        {isLoading ? <Skeleton className="h-[400px]" /> : <ConversionChart data={mockConversionData} vendedores={["Vendedor 1", "Vendedor 2"]} />}
         {isLoading || !originData ? <Skeleton className="h-[400px]" /> : <LeadsByOriginChart data={originData} />}
       </div>
 
