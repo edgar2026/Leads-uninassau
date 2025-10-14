@@ -1,0 +1,210 @@
+Crie um sistema completo de controle e acompanhamento de leads de uma unidade de ensino superior, moderno, responsivo e com foco em gestão comercial interna, sem envio de mensagens em massa.
+
+⚙️ OBJETIVO GERAL
+
+Gerenciar o processo de captação de alunos, desde a inscrição até a matrícula, permitindo que o coordenador acompanhe a produtividade da equipe comercial, visualize funis de conversão e tenha painéis e dashboards em tempo real.
+
+🧩 FUNCIONALIDADES PRINCIPAIS
+1. Autenticação e Perfis
+
+Login com e-mail e senha.
+
+Perfis de acesso:
+
+Administrador: gerencia tudo.
+
+Comercial: vê apenas seus leads.
+
+Supervisor: acompanha desempenho da equipe.
+
+2. Cadastro de Leads
+
+Formulário para novo lead com os seguintes campos:
+
+Nome completo
+
+Telefone / WhatsApp
+
+E-mail
+
+Curso de interesse
+
+Origem do lead (site, feira, indicação, etc.)
+
+Data de cadastro (automática)
+
+Responsável (usuário logado)
+
+Status do lead (Quente, Morno, Frio, Perdido, Matriculado)
+
+Observações e histórico de contatos
+
+Permitir importar leads via planilha CSV.
+
+3. Gestão Comercial (Painel do Vendedor)
+
+Lista de todos os leads do vendedor.
+
+Filtros por curso, status e data.
+
+Ações rápidas:
+
+Atualizar status do lead.
+
+Adicionar observações e interações.
+
+Agendar retorno.
+
+Marcar etapa atual (Contato, Interesse, Prova, Matrícula).
+
+Histórico automático de atividades com data e usuário.
+
+4. Painel Gerencial / Dashboard
+
+Painel principal do coordenador com visão geral da unidade:
+
+Total de leads cadastrados.
+
+Leads por curso e origem.
+
+Conversão por vendedor.
+
+Leads por status (quente, morno, frio) — com gráfico de termômetro.
+
+Funil de conversão visual: Contato → Interesse → Prova → Matrícula.
+
+Ranking de vendedores com taxa de conversão.
+
+Gráficos semanais/mensais.
+
+Tempo médio até matrícula.
+
+5. Termômetro de Lead
+
+Campo visual com ícones ou cores:
+
+🔥 Quente (alto interesse)
+
+🟡 Morno (em negociação)
+
+🧊 Frio (sem resposta)
+
+Regras configuráveis:
+
+Automático por data do último contato.
+
+Manual (usuário escolhe).
+
+6. Configurações do Sistema
+
+Cadastrar e editar cursos, origens de lead e status personalizados.
+
+Definir critérios de temperatura (quente, morno, frio).
+
+Gerenciar usuários e permissões.
+
+Personalizar layout:
+
+Logo da instituição.
+
+Cores e tema (modo claro/escuro).
+
+7. Extras e Relatórios
+
+Exportar relatórios (PDF / Excel).
+
+Lembrete de leads sem contato há X dias.
+
+Busca inteligente (por nome, telefone ou e-mail).
+
+Histórico completo de ações (para auditoria).
+
+🎨 DESIGN MODERNO
+
+Layout estilo painel administrativo (Dashboard).
+
+Interface limpa e profissional com TailwindCSS.
+
+Cores suaves e indicadores com ícones e emojis.
+
+Tema personalizável (ex: Outubro Rosa, Natal, Carnaval).
+
+Componentes animados (transições suaves, gráficos dinâmicos).
+
+📊 TECNOLOGIAS RECOMENDADAS
+
+Frontend: React + Vite + TailwindCSS
+
+Backend: Supabase (banco + autenticação + API)
+
+Gráficos: Recharts ou Chart.js
+
+Animações: Framer Motion
+
+Controle de estado: Zustand ou Context API
+
+💾 BANCO DE DADOS (Tabelas sugeridas)
+
+Tabela: leads
+
+Campo	Tipo	Descrição
+id	uuid	identificador
+nome	text	nome do lead
+telefone	text	WhatsApp
+email	text	e-mail
+curso	text	curso de interesse
+origem	text	origem do lead
+status	text	quente, morno, frio, etc.
+etapa_funil	text	contato, interesse, prova, matrícula
+observacoes	text	anotações do vendedor
+responsavel_id	uuid	id do vendedor
+created_at	timestamptz	data de cadastro
+updated_at	timestamptz	última atualização
+
+Tabela: usuarios
+
+Campo	Tipo	Descrição
+id	uuid	identificador
+nome	text	nome do usuário
+email	text	e-mail de login
+senha	text	senha criptografada
+cargo	text	administrador, comercial, supervisor
+
+Tabela: interacoes
+| lead_id | usuário_id | data | observacao |
+
+🧠 COMPORTAMENTO
+
+Leads recém-cadastrados aparecem automaticamente no painel do responsável.
+
+Coordenador pode filtrar leads por vendedor, curso ou status.
+
+Sistema registra quem alterou cada dado.
+
+Dashboards atualizados em tempo real.
+
+Possibilidade de clonar leads entre campanhas.
+
+🔒 SEGURANÇA
+
+Autenticação via Supabase Auth.
+
+Restrições por nível de acesso.
+
+Logs de atividades.
+
+Somente administradores podem excluir leads.
+
+💡 DIFERENCIAIS
+
+Termômetro visual com emojis.
+
+Painel temático (datas comemorativas).
+
+Totalmente responsivo (desktop e mobile).
+
+Exportação de relatórios.
+
+Filtros e busca avançada.
+
+Zero envio em massa — foco no acompanhamento e gestão comercial.
