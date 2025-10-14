@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, Settings, GraduationCap, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   {
@@ -38,6 +39,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { profile, signOut } = useAuth();
 
   return (
     <Sidebar>
@@ -75,17 +77,19 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <button data-testid="button-logout" onClick={() => console.log("Logout triggered")}>
+              <button data-testid="button-logout" onClick={signOut}>
                 <LogOut className="h-4 w-4" />
                 <span>Sair</span>
               </button>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="mt-3 px-2">
-          <p className="text-xs font-medium">João Silva</p>
-          <p className="text-xs text-muted-foreground">Comercial</p>
-        </div>
+        {profile && (
+          <div className="mt-3 px-2">
+            <p className="text-xs font-medium truncate">{profile.full_name}</p>
+            <p className="text-xs text-muted-foreground">{profile.role}</p>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

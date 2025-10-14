@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Dashboard from "@/pages/Dashboard";
 import LeadsPanel from "@/pages/LeadsPanel";
 import LeadDetail from "@/pages/LeadDetail";
@@ -16,45 +17,42 @@ import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const { session, loading } = useAuth();
+  const [location] = useLocation();
+
+  if (loading) {
+    return <div>Carregando...</div>; // TODO: Add a proper loading spinner/page
+  }
+
+  if (!session && location !== "/login") {
+    return <Redirect to="/login" />;
+  }
+
+  if (session && location === "/login") {
+    return <Redirect to="/" />;
+  }
+
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/">
-        {() => (
-          <MainLayout>
-            <Dashboard />
-          </MainLayout>
-        )}
+        <MainLayout><Dashboard /></MainLayout>
       </Route>
       <Route path="/leads">
-        {() => (
-          <MainLayout>
-            <LeadsPanel />
-          </MainLayout>
-        )}
+        <MainLayout><LeadsPanel /></MainLayout>
       </Route>
       <Route path="/lead/:id">
-        {() => (
-          <MainLayout>
-            <LeadDetail />
-          </MainLayout>
-        )}
+        <MainLayout><LeadDetail /></MainLayout>
       </Route>
       <Route path="/cursos">
-        {() => (
-          <MainLayout>
-            <Cursos />
-          </MainLayout>
-        )}
+        <MainLayout><Cursos /></MainLayout>
       </Route>
       <Route path="/configuracoes">
-        {() => (
-          <MainLayout>
-            <Configuracoes />
-          </MainLayout>
-        )}
+        <MainLayout><Configuracoes /></MainLayout>
       </Route>
-      <Route component={NotFound} />
+      <Route>
+        <MainLayout><NotFound /></MainLayout>
+      </Route>
     </Switch>
   );
 }
@@ -87,8 +85,10 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <AuthProvider>
+            <Toaster />
+            <Router />
+          </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

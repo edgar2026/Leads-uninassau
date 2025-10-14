@@ -1,22 +1,23 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { GraduationCap } from "lucide-react";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login attempt:", { email, password });
-    // TODO: remove mock functionality - Replace with actual authentication
-    setLocation("/");
-  };
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        setLocation("/", { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setLocation]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
@@ -27,39 +28,34 @@ export default function Login() {
           </div>
           <div>
             <CardTitle className="text-2xl">Sistema CRM Educacional</CardTitle>
-            <CardDescription>Entre com suas credenciais para acessar</CardDescription>
+            <CardDescription>Entre ou crie sua conta para acessar</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                data-testid="input-email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                data-testid="input-password"
-              />
-            </div>
-            <Button type="submit" className="w-full" data-testid="button-login">
-              Entrar
-            </Button>
-          </form>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            providers={[]}
+            localization={{
+              variables: {
+                sign_up: {
+                  email_label: "E-mail",
+                  password_label: "Senha",
+                  button_label: "Cadastrar",
+                  social_provider_text: "Entrar com {{provider}}",
+                  link_text: "Não tem uma conta? Cadastre-se",
+                  confirmation_text: "Verifique seu e-mail para o link de confirmação"
+                },
+                sign_in: {
+                  email_label: "E-mail",
+                  password_label: "Senha",
+                  button_label: "Entrar",
+                  social_provider_text: "Entrar com {{provider}}",
+                  link_text: "Já tem uma conta? Entre",
+                },
+              },
+            }}
+          />
         </CardContent>
       </Card>
     </div>
