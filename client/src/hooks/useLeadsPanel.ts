@@ -24,20 +24,28 @@ export type LeadFromSupabase = {
 export function useLeadsPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const { data: leads, isLoading: isLoadingLeads } = useQuery<LeadFromSupabase[]>({
-    queryKey: ["leads", user?.id],
+    queryKey: ["leads", user?.id, profile?.role],
     queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
+      if (!user || !profile) return [];
+      
+      let query = supabase
         .from("leads")
-        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name), profiles(full_name)")
-        .eq("owner_id", user.id);
+        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name), profiles!owner_id(full_name)");
+
+      // Se o usuário for do tipo 'Comercial', mostra apenas os leads dele.
+      // Administradores e outros cargos podem ver todos os leads.
+      if (profile.role === "Comercial") {
+        query = query.eq("owner_id", user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw new Error(error.message);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user && !!profile,
   });
 
   const { data: courses, isLoading: isLoadingCourses } = useQuery({
