@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
+// Usamos path.join para garantir que os caminhos sejam resolvidos corretamente
+const rootDir = process.cwd();
+
 export default defineConfig({
   base: './', // Mantido como relativo para compatibilidade máxima no deploy
   plugins: [
@@ -22,14 +25,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "@": path.join(rootDir, "client", "src"),
+      "@shared": path.join(rootDir, "shared"),
+      "@assets": path.join(rootDir, "attached_assets"),
     },
   },
-  root: path.resolve(import.meta.dirname, "client"),
+  root: path.join(rootDir, "client"),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist"),
+    outDir: path.join(rootDir, "dist"),
     emptyOutDir: true,
   },
   server: {
