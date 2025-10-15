@@ -2,8 +2,14 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type LeadStatus } from "./StatusBadge";
 import { StageBadge, type LeadStage } from "./StageBadge";
-import { Mail, Phone, Edit, Eye } from "lucide-react";
+import { Mail, Phone, Edit, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface Lead {
   id: string;
@@ -21,18 +27,36 @@ interface LeadCardProps {
   lead: Lead;
   onEdit?: (lead: Lead) => void;
   onView?: (lead: Lead) => void;
+  onDelete?: (lead: Lead) => void;
 }
 
-export function LeadCard({ lead, onEdit, onView }: LeadCardProps) {
+export function LeadCard({ lead, onEdit, onView, onDelete }: LeadCardProps) {
   return (
-    <Card className="hover-elevate" data-testid={`card-lead-${lead.id}`}>
+    <Card className="hover-elevate flex flex-col" data-testid={`card-lead-${lead.id}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold">{lead.name}</h3>
-          <StatusBadge status={lead.status} />
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold">{lead.name}</h3>
+            <StatusBadge status={lead.status} />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="flex-shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit?.(lead)}>
+                <Edit className="mr-2 h-4 w-4" /> Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete?.(lead)} className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex-1">
         {lead.phone && (
           <div className="flex items-center gap-2 text-sm">
             <Phone className="h-4 w-4 text-muted-foreground" />
@@ -56,17 +80,7 @@ export function LeadCard({ lead, onEdit, onView }: LeadCardProps) {
           </p>
         )}
       </CardContent>
-      <CardFooter className="gap-2 pt-0">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          onClick={() => onEdit?.(lead)}
-          data-testid={`button-edit-${lead.id}`}
-        >
-          <Edit className="h-4 w-4 mr-1" />
-          Editar
-        </Button>
+      <CardFooter className="pt-3">
         <Button
           size="sm"
           variant="outline"
@@ -75,7 +89,7 @@ export function LeadCard({ lead, onEdit, onView }: LeadCardProps) {
           data-testid={`button-view-${lead.id}`}
         >
           <Eye className="h-4 w-4 mr-1" />
-          Detalhes
+          Ver Detalhes
         </Button>
       </CardFooter>
     </Card>

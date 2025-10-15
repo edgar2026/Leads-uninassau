@@ -114,6 +114,20 @@ export function useLeadsPanel() {
     },
   });
 
+  const deleteLead = useMutation({
+    mutationFn: async (leadId: string) => {
+      const { error } = await supabase.from("leads").delete().eq("id", leadId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Sucesso!", description: "Lead excluído." });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+    },
+    onError: (error) => {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    },
+  });
+
   return {
     leads,
     courses,
@@ -122,6 +136,7 @@ export function useLeadsPanel() {
     leadStages,
     createLead,
     updateLead,
+    deleteLead,
     isLoading: isLoadingLeads || isLoadingCourses || isLoadingOrigins || isLoadingCourseTypes || isLoadingLeadStages,
   };
 }
