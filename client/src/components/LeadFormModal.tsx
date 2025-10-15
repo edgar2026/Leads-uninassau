@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { LeadFromSupabase } from "@/hooks/useLeadsPanel";
+import InputMask from "react-input-mask";
 
 type Course = { id: string; name: string; type_id: string };
 type Origin = { id: string; name: string };
@@ -79,7 +80,26 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins, c
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone / WhatsApp</Label>
-              <Input id="phone" {...register("phone")} placeholder="(00) 00000-0000" data-testid="input-telefone" />
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <InputMask
+                    mask="(99) 99999-9999"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                  >
+                    {(inputProps: any) => (
+                      <Input
+                        {...inputProps}
+                        id="phone"
+                        placeholder="(00) 00000-0000"
+                        data-testid="input-telefone"
+                      />
+                    )}
+                  </InputMask>
+                )}
+              />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="email">E-mail</Label>
