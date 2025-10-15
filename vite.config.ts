@@ -4,6 +4,7 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
+  base: '/', // Garante que os caminhos dos assets sejam absolutos a partir da raiz do domínio
   plugins: [
     react(),
     runtimeErrorOverlay(),
