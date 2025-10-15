@@ -44,13 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initializeSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        if (currentUser) {
-          const userProfile = await fetchProfile(currentUser);
-          setProfile(userProfile);
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session on init:", error);
+        } else {
+          setSession(data.session);
+          const currentUser = data.session?.user ?? null;
+          setUser(currentUser);
+          if (currentUser) {
+            const userProfile = await fetchProfile(currentUser);
+            setProfile(userProfile);
+          }
         }
       } catch (error) {
         console.error("Error initializing session:", error);
