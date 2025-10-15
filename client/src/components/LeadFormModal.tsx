@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import type { LeadFromSupabase } from "@/hooks/useLeadsPanel";
 
 type Course = { id: string; name: string; type_id: string };
@@ -45,6 +46,7 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins, c
         origin_id: lead?.origin_id || "",
         status: lead?.status || "morno",
         stage_id: lead?.stage_id || "",
+        description: "", // Limpa a descrição ao abrir
       });
     }
   }, [open, lead, courses, reset]);
@@ -188,6 +190,17 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins, c
               />
               {errors.stage_id && <p className="text-red-500 text-xs">Etapa é obrigatória</p>}
             </div>
+            {!lead?.id && (
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description">Observações Iniciais</Label>
+                <Textarea
+                  id="description"
+                  {...register("description")}
+                  placeholder="Primeiro contato, interesse inicial, etc."
+                  className="min-h-24"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose} data-testid="button-cancel">

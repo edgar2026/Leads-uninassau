@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StageBadge } from "@/components/StageBadge";
 import { InteractionModal } from "@/components/InteractionModal";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Edit } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Edit, FilePlus } from "lucide-react";
 
 // TODO: remove mock functionality
 const mockLead = {
@@ -52,6 +52,7 @@ const interactionIcons = {
   whatsapp: MessageSquare,
   reuniao: Calendar,
   visita: MapPin,
+  cadastro: FilePlus,
 };
 
 export default function LeadDetail() {
@@ -147,7 +148,7 @@ export default function LeadDetail() {
             <CardContent>
               <div className="space-y-4">
                 {mockInteractions.map((interaction) => {
-                  const Icon = interactionIcons[interaction.tipo];
+                  const Icon = interactionIcons[interaction.tipo as keyof typeof interactionIcons];
                   return (
                     <div
                       key={interaction.id}

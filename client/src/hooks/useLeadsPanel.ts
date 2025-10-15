@@ -27,14 +27,17 @@ export function useLeadsPanel() {
   const { user } = useAuth();
 
   const { data: leads, isLoading: isLoadingLeads } = useQuery<LeadFromSupabase[]>({
-    queryKey: ["leads"],
+    queryKey: ["leads", user?.id],
     queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from("leads")
-        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name), profiles(full_name)");
+        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name), profiles(full_name)")
+        .eq("owner_id", user.id);
       if (error) throw new Error(error.message);
       return data || [];
     },
+    enabled: !!user,
   });
 
   const { data: courses, isLoading: isLoadingCourses } = useQuery({
@@ -75,7 +78,16 @@ export function useLeadsPanel() {
 
   const createLead = useMutation({
     mutationFn: async (newLead: any) => {
-      const { error } = await supabase.from("leads").insert({ ...newLead, owner_id: user?.id });
+      const { error } = await supabase.rpc('create_lead_with_interaction', {
+        name: newLead.name,
+        phone: newLead.phone,
+        email: newLead.email,
+        course_id: newLead.course_id,
+        origin_id: newLead.origin_id,
+        status: newLead.status,
+        stage_id: newLead.stage_id,
+        interaction_description: newLead.description,
+      });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
