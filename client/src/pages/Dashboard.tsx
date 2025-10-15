@@ -74,14 +74,14 @@ export default function Dashboard() {
         {isLoading || !conversionData ? (
           <Skeleton className="h-[400px]" />
         ) : (
-          <ConversionChart data={conversionData.chartData} vendedores={conversionData.vendedores} />
+          <ConversionChart data={conversionData.chartData} consultores={conversionData.consultores} />
         )}
         {isLoading || !originData ? <Skeleton className="h-[400px]" /> : <LeadsByOriginChart data={originData} />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {isLoading || !rankingData ? <Skeleton className="h-[500px]" /> : <RankingTable vendedores={rankingData} />}
+          {isLoading || !rankingData ? <Skeleton className="h-[500px]" /> : <RankingTable consultores={rankingData} />}
         </div>
         <div>
           {isLoading || !activityData ? <Skeleton className="h-[500px]" /> : <RecentActivity activities={activityData} />}

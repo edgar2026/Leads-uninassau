@@ -94,7 +94,7 @@ export function useDashboardData({ dateRange, courseType }: DashboardDataParams)
             const originData = [];
             const rankingData = [];
             const activityData = [];
-            const conversionData = { chartData: [], vendedores: [] };
+            const conversionData = { chartData: [], consultores: [] };
 
             return {
                 stats,

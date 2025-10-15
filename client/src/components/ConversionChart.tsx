@@ -6,10 +6,10 @@ interface ConversionChartProps {
     periodo: string;
     [key: string]: string | number;
   }>;
-  vendedores: string[];
+  consultores: string[];
 }
 
-export function ConversionChart({ data, vendedores }: ConversionChartProps) {
+export function ConversionChart({ data, consultores }: ConversionChartProps) {
   const colors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
   return (
@@ -31,11 +31,11 @@ export function ConversionChart({ data, vendedores }: ConversionChartProps) {
               }}
             />
             <Legend />
-            {vendedores.map((vendedor, index) => (
+            {consultores.map((consultor, index) => (
               <Line
-                key={vendedor}
+                key={consultor}
                 type="monotone"
-                dataKey={vendedor}
+                dataKey={consultor}
                 stroke={colors[index % colors.length]}
                 strokeWidth={2}
                 dot={{ r: 4 }}

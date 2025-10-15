@@ -10,7 +10,7 @@ const mockData = [
 export default function ConversionChartExample() {
   return (
     <div className="p-8">
-      <ConversionChart data={mockData} vendedores={["João Silva", "Maria Costa", "Pedro Santos"]} />
+      <ConversionChart data={mockData} consultores={["João Silva", "Maria Costa", "Pedro Santos"]} />
     </div>
   );
 }

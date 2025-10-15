@@ -1,6 +1,6 @@
-import { RankingTable, type Vendedor } from "../RankingTable";
+import { RankingTable, type Consultor } from "../RankingTable";
 
-const mockVendedores: Vendedor[] = [
+const mockConsultores: Consultor[] = [
   { id: "1", nome: "Maria Costa", totalLeads: 98, conversoes: 42, taxaConversao: 42.8 },
   { id: "2", nome: "João Silva", totalLeads: 85, conversoes: 35, taxaConversao: 41.2 },
   { id: "3", nome: "Pedro Santos", totalLeads: 64, conversoes: 23, taxaConversao: 35.9 },
@@ -10,7 +10,7 @@ const mockVendedores: Vendedor[] = [
 export default function RankingTableExample() {
   return (
     <div className="p-8 max-w-2xl">
-      <RankingTable vendedores={mockVendedores} />
+      <RankingTable consultores={mockConsultores} />
     </div>
   );
 }
