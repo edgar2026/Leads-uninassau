@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { DateRange } from "react-day-picker";
 import { DashboardStat } from "@/components/DashboardStat";
 import { FunnelChart } from "@/components/FunnelChart";
 import { ConversionChart } from "@/components/ConversionChart";
@@ -7,9 +9,13 @@ import { RecentActivity } from "@/components/RecentActivity";
 import { LeadsByOriginChart } from "@/components/LeadsByOriginChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { DashboardFilters } from "@/components/DashboardFilters";
 import { Users, TrendingUp, UserCheck, Clock } from "lucide-react";
 
 export default function Dashboard() {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [courseType, setCourseType] = useState<string>("todos");
+
   const {
     stats,
     funnelData,
@@ -19,14 +25,23 @@ export default function Dashboard() {
     activityData,
     conversionData,
     isLoading,
-  } = useDashboardData();
+  } = useDashboardData({ dateRange, courseType });
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold" data-testid="text-dashboard-title">Dashboard Gerencial</h1>
-        <p className="text-muted-foreground mt-1">Visão geral da unidade de ensino</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold" data-testid="text-dashboard-title">Dashboard Gerencial</h1>
+          <p className="text-muted-foreground mt-1">Visão geral da unidade de ensino</p>
+        </div>
       </div>
+      
+      <DashboardFilters 
+        dateRange={dateRange}
+        onDateChange={setDateRange}
+        courseType={courseType}
+        onCourseTypeChange={setCourseType}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading || !stats ? (
