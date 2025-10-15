@@ -1,12 +1,4 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -15,233 +7,160 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Plus } from "lucide-react";
+import { useAdminManagement, type Course, type Origin } from "@/hooks/useAdminManagement";
+import { ManagementTable } from "@/components/ManagementTable";
+import { ManagementFormModal } from "@/components/ManagementFormModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-const profileSchema = z.object({
-  full_name: z
-    .string()
-    .min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
-});
+type ModalState = {
+  isOpen: boolean;
+  item?: Course | Origin;
+  type: 'course' | 'origin' | null;
+};
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
-
-function UserProfileCard() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name, role")
-        .eq("id", user.id)
-        .single();
-      if (error) throw new Error(error.message);
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      full_name: "",
-    },
-  });
-
-  useEffect(() => {
-    if (profile) {
-      form.reset({ full_name: profile.full_name || "" });
-    }
-  }, [profile, form]);
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (values: ProfileFormValues) => {
-      if (!user) throw new Error("Usuário não autenticado.");
-      const { error } = await supabase
-        .from("profiles")
-        .update({ full_name: values.full_name, updated_at: new Date().toISOString() })
-        .eq("id", user.id);
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Sucesso!",
-        description: "Seu perfil foi atualizado.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
-      // Also invalidate the auth context's profile data if it's separate
-      queryClient.invalidateQueries({ queryKey: ["authProfile"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Perfil do Usuário</CardTitle>
-          <CardDescription>Atualize suas informações</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Perfil do Usuário</CardTitle>
-        <CardDescription>Atualize suas informações</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) => mutate(data))}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome</FormLabel>
-                  <FormControl>
-                    <Input {...field} data-testid="input-nome" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="space-y-2">
-              <FormLabel>E-mail</FormLabel>
-              <Input
-                type="email"
-                value={user?.email || ""}
-                disabled
-                data-testid="input-email"
-              />
-            </div>
-            <div className="space-y-2">
-              <FormLabel>Cargo</FormLabel>
-              <Input
-                value={profile?.role || ""}
-                disabled
-                data-testid="input-cargo"
-              />
-            </div>
-            <Button type="submit" disabled={isPending} data-testid="button-save">
-              {isPending ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
-}
+type DeleteDialogState = {
+  isOpen: boolean;
+  item?: Course | Origin;
+  type: 'course' | 'origin' | null;
+};
 
 export default function Configuracoes() {
+  const { courses, origins, isLoading, createEntity, updateEntity, deleteEntity } = useAdminManagement();
+  const [modalState, setModalState] = useState<ModalState>({ isOpen: false, type: null });
+  const [deleteDialogState, setDeleteDialogState] = useState<DeleteDialogState>({ isOpen: false, type: null });
+
+  const openModal = (type: 'course' | 'origin', item?: Course | Origin) => {
+    setModalState({ isOpen: true, type, item });
+  };
+
+  const closeModal = () => {
+    setModalState({ isOpen: false, type: null, item: undefined });
+  };
+
+  const openDeleteDialog = (type: 'course' | 'origin', item: Course | Origin) => {
+    setDeleteDialogState({ isOpen: true, type, item });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogState({ isOpen: false, type: null, item: undefined });
+  };
+
+  const handleSave = (data: { id?: string; name: string; type?: string }) => {
+    const entity = modalState.type === 'course' ? 'courses' : 'origins';
+    if (data.id) {
+      updateEntity.mutate({ entity, id: data.id, name: data.name, type: data.type });
+    } else {
+      createEntity.mutate({ entity, name: data.name, type: data.type });
+    }
+  };
+
+  const handleDelete = () => {
+    if (deleteDialogState.item && deleteDialogState.type) {
+      const entity = deleteDialogState.type === 'course' ? 'courses' : 'origins';
+      deleteEntity.mutate({ entity, id: deleteDialogState.item.id });
+      closeDeleteDialog();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground mt-1">Personalize o sistema</p>
+        <p className="text-muted-foreground mt-1">Personalize e gerencie o sistema</p>
       </div>
 
       <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Aparência</CardTitle>
-            <CardDescription>
-              Personalize a aparência do sistema
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <Label>Tema</Label>
-                <p className="text-sm text-muted-foreground">
-                  Alternar entre modo claro e escuro
-                </p>
-              </div>
+              <Label>Tema (Claro/Escuro)</Label>
               <ThemeToggle />
             </div>
           </CardContent>
         </Card>
 
-        <UserProfileCard />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Cursos</CardTitle>
+              <CardDescription>Adicione, edite ou remova cursos.</CardDescription>
+            </div>
+            <Button size="sm" onClick={() => openModal('course')}>
+              <Plus className="h-4 w-4 mr-2" /> Novo Curso
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <ManagementTable
+              data={courses}
+              isLoading={isLoading}
+              onEdit={(item) => openModal('course', item)}
+              onDelete={(item) => openDeleteDialog('course', item)}
+              headers={["Nome", "Tipo"]}
+            />
+          </CardContent>
+        </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Critérios de Temperatura</CardTitle>
-            <CardDescription>
-              Defina quando um lead é considerado quente, morno ou frio
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>🔥 Quente - Último contato há menos de</Label>
-              <div className="flex items-center gap-2">
-                <Input type="number" defaultValue="3" className="w-24" />
-                <span>dias</span>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Origens de Lead</CardTitle>
+              <CardDescription>Adicione, edite ou remova as origens dos leads.</CardDescription>
             </div>
-            <div className="space-y-2">
-              <Label>🟡 Morno - Último contato entre</Label>
-              <div className="flex items-center gap-2">
-                <Input type="number" defaultValue="3" className="w-24" />
-                <span>e</span>
-                <Input type="number" defaultValue="7" className="w-24" />
-                <span>dias</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>🧊 Frio - Último contato há mais de</Label>
-              <div className="flex items-center gap-2">
-                <Input type="number" defaultValue="7" className="w-24" />
-                <span>dias</span>
-              </div>
-            </div>
-            <Button onClick={() => console.log("Save criteria triggered")}>
-              Salvar Critérios
+            <Button size="sm" onClick={() => openModal('origin')}>
+              <Plus className="h-4 w-4 mr-2" /> Nova Origem
             </Button>
+          </CardHeader>
+          <CardContent>
+            <ManagementTable
+              data={origins}
+              isLoading={isLoading}
+              onEdit={(item) => openModal('origin', item)}
+              onDelete={(item) => openDeleteDialog('origin', item)}
+              headers={["Nome"]}
+            />
           </CardContent>
         </Card>
       </div>
+
+      <ManagementFormModal
+        open={modalState.isOpen}
+        onClose={closeModal}
+        onSave={handleSave}
+        item={modalState.item}
+        title={modalState.type === 'course' ? 'Curso' : 'Origem'}
+        hasType={modalState.type === 'course'}
+      />
+
+      <AlertDialog open={deleteDialogState.isOpen} onOpenChange={closeDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o item
+              "{deleteDialogState.item?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

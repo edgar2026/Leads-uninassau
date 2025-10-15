@@ -4,19 +4,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { LeadFromSupabase } from "@/hooks/useLeadsPanel";
 
 type Course = { id: string; name: string; type: string };
+type Origin = { id: string; name: string };
 
 interface LeadFormModalProps {
   open: boolean;
   onClose: () => void;
-  lead?: Partial<LeadFromSupabase & { courses?: Course }>;
+  lead?: Partial<LeadFromSupabase>;
   onSave: (lead: any) => void;
   courses: Course[];
-  origins: string[];
+  origins: Origin[];
 }
 
 export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }: LeadFormModalProps) {
@@ -50,7 +50,7 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
         email: lead?.email || "",
         courseType: courseType,
         course_id: lead?.course_id || "",
-        origin: lead?.origin || "",
+        origin: lead?.origin_id || "",
         status: lead?.status || "morno",
         stage: lead?.stage || "contato",
       });
@@ -58,7 +58,6 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
   }, [open, lead, courses, reset]);
 
   useEffect(() => {
-    // Reseta o curso selecionado quando o tipo de curso muda
     setValue('course_id', '');
   }, [watchedCourseType, setValue]);
 
@@ -146,7 +145,7 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
                     </SelectTrigger>
                     <SelectContent>
                       {origins.map(origin => (
-                        <SelectItem key={origin} value={origin}>{origin}</SelectItem>
+                        <SelectItem key={origin.id} value={origin.id}>{origin.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

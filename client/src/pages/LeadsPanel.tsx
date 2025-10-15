@@ -20,10 +20,11 @@ export default function LeadsPanel() {
   const { leads, courses, origins, createLead, updateLead, isLoading } = useLeadsPanel();
 
   const handleSaveLead = (leadData: any) => {
-    if (leadData.id) {
-      updateLead.mutate(leadData);
+    const payload = { ...leadData, origin_id: leadData.origin, origin: undefined };
+    if (payload.id) {
+      updateLead.mutate(payload);
     } else {
-      createLead.mutate(leadData);
+      createLead.mutate(payload);
     }
   };
 
@@ -42,7 +43,6 @@ export default function LeadsPanel() {
     if (!leads) return [];
     
     return leads.filter((lead) => {
-      const leadCourseId = lead.course_id;
       const leadName = lead.name?.toLowerCase() || "";
       const leadPhone = lead.phone || "";
       const leadEmail = lead.email?.toLowerCase() || "";
@@ -54,7 +54,7 @@ export default function LeadsPanel() {
         leadEmail.includes(searchTermLower);
 
       const matchesStatus = statusFilter === "todos" || lead.status === statusFilter;
-      const matchesCurso = cursoFilter === "todos" || leadCourseId === cursoFilter;
+      const matchesCurso = cursoFilter === "todos" || lead.course_id === cursoFilter;
 
       return matchesSearch && matchesStatus && matchesCurso;
     }).map(lead => ({
@@ -63,7 +63,7 @@ export default function LeadsPanel() {
       phone: lead.phone,
       email: lead.email,
       courseName: lead.courses?.name || 'N/A',
-      origin: lead.origin,
+      origin: lead.origins?.name || 'N/A',
       status: lead.status || 'morno',
       stage: lead.stage || 'contato',
       last_contact_at: lead.last_contact_at,

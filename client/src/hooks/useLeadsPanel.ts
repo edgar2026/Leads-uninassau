@@ -9,13 +9,14 @@ export type LeadFromSupabase = {
   phone: string | null;
   email: string | null;
   course_id: string | null;
-  origin: string | null;
+  origin_id: string | null;
   status: "quente" | "morno" | "frio" | "perdido" | "matriculado" | null;
   stage: "contato" | "interesse" | "prova" | "matricula" | null;
   owner_id: string | null;
   created_at: string | null;
   last_contact_at: string | null;
-  courses: { name: string } | null;
+  courses: { name: string; type: string } | null;
+  origins: { name: string } | null;
   profiles: { full_name: string } | null;
 };
 
@@ -29,7 +30,7 @@ export function useLeadsPanel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("*, courses(name), profiles(full_name)");
+        .select("*, courses(name, type), origins(name), profiles(full_name)");
       if (error) throw new Error(error.message);
       return data || [];
     },
@@ -38,7 +39,7 @@ export function useLeadsPanel() {
   const { data: courses, isLoading: isLoadingCourses } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("id, name, type");
+      const { data, error } = await supabase.from("courses").select("id, name, type").order("name");
       if (error) throw new Error(error.message);
       return data || [];
     },
@@ -47,21 +48,20 @@ export function useLeadsPanel() {
   const { data: origins, isLoading: isLoadingOrigins } = useQuery({
     queryKey: ["origins"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_distinct_origins");
+      const { data, error } = await supabase.from("origins").select("id, name").order("name");
       if (error) throw new Error(error.message);
-      return data.map((item: { origin: string }) => item.origin) || [];
+      return data.map((item: { id: string; name: string }) => item) || [];
     },
   });
 
   const createLead = useMutation({
-    mutationFn: async (newLead: Omit<LeadFromSupabase, "id" | "created_at" | "courses" | "profiles">) => {
+    mutationFn: async (newLead: any) => {
       const { error } = await supabase.from("leads").insert({ ...newLead, owner_id: user?.id });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       toast({ title: "Sucesso!", description: "Lead cadastrado." });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["origins"] });
     },
     onError: (error) => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -69,7 +69,7 @@ export function useLeadsPanel() {
   });
 
   const updateLead = useMutation({
-    mutationFn: async (updatedLead: Partial<LeadFromSupabase>) => {
+    mutationFn: async (updatedLead: any) => {
       const { id, ...rest } = updatedLead;
       const { error } = await supabase.from("leads").update(rest).eq("id", id as string);
       if (error) throw new Error(error.message);
@@ -77,7 +77,6 @@ export function useLeadsPanel() {
     onSuccess: () => {
       toast({ title: "Sucesso!", description: "Lead atualizado." });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      queryClient.invalidateQueries({ queryKey: ["origins"] });
     },
     onError: (error) => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
