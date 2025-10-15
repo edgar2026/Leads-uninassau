@@ -3,17 +3,18 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge, type LeadStatus } from "./StatusBadge";
 import { StageBadge, type LeadStage } from "./StageBadge";
 import { Mail, Phone, Edit, Eye } from "lucide-react";
+import { formatRelativeTime } from "@/lib/utils";
 
 export interface Lead {
   id: string;
-  nome: string;
-  telefone: string;
-  email: string;
-  curso: string;
-  origem: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  courseName: string | null;
+  origin: string | null;
   status: LeadStatus;
-  etapa: LeadStage;
-  ultimoContato?: string;
+  stage: LeadStage;
+  last_contact_at: string | null;
 }
 
 interface LeadCardProps {
@@ -27,27 +28,31 @@ export function LeadCard({ lead, onEdit, onView }: LeadCardProps) {
     <Card className="hover-elevate" data-testid={`card-lead-${lead.id}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold">{lead.nome}</h3>
+          <h3 className="text-lg font-semibold">{lead.name}</h3>
           <StatusBadge status={lead.status} />
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-4 w-4 text-muted-foreground" />
-          <span data-testid={`text-phone-${lead.id}`}>{lead.telefone}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Mail className="h-4 w-4 text-muted-foreground" />
-          <span className="truncate" data-testid={`text-email-${lead.id}`}>{lead.email}</span>
-        </div>
+        {lead.phone && (
+          <div className="flex items-center gap-2 text-sm">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span data-testid={`text-phone-${lead.id}`}>{lead.phone}</span>
+          </div>
+        )}
+        {lead.email && (
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span className="truncate" data-testid={`text-email-${lead.id}`}>{lead.email}</span>
+          </div>
+        )}
         <div className="flex gap-2 flex-wrap">
-          <StageBadge stage={lead.etapa} />
-          <Badge variant="secondary" className="text-xs">{lead.curso}</Badge>
-          <Badge variant="secondary" className="text-xs">{lead.origem}</Badge>
+          <StageBadge stage={lead.stage} />
+          {lead.courseName && <Badge variant="secondary" className="text-xs">{lead.courseName}</Badge>}
+          {lead.origin && <Badge variant="secondary" className="text-xs">{lead.origin}</Badge>}
         </div>
-        {lead.ultimoContato && (
+        {lead.last_contact_at && (
           <p className="text-xs text-muted-foreground">
-            Último contato: {lead.ultimoContato}
+            Último contato: {formatRelativeTime(lead.last_contact_at)}
           </p>
         )}
       </CardContent>

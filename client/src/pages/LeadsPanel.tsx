@@ -1,81 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
-import { LeadCard, type Lead } from "@/components/LeadCard";
+import { LeadCard } from "@/components/LeadCard";
 import { LeadFormModal } from "@/components/LeadFormModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
-
-// TODO: remove mock functionality
-const mockLeads: Lead[] = [
-  {
-    id: "1",
-    nome: "Maria Santos",
-    telefone: "(11) 98765-4321",
-    email: "maria.santos@email.com",
-    curso: "Administração",
-    origem: "Site",
-    status: "quente",
-    etapa: "interesse",
-    ultimoContato: "2 horas atrás",
-  },
-  {
-    id: "2",
-    nome: "João Oliveira",
-    telefone: "(21) 97654-3210",
-    email: "joao.oliveira@email.com",
-    curso: "Engenharia",
-    origem: "Feira",
-    status: "morno",
-    etapa: "contato",
-    ultimoContato: "1 dia atrás",
-  },
-  {
-    id: "3",
-    nome: "Ana Costa",
-    telefone: "(31) 96543-2109",
-    email: "ana.costa@email.com",
-    curso: "Direito",
-    origem: "Indicação",
-    status: "frio",
-    etapa: "prova",
-    ultimoContato: "5 dias atrás",
-  },
-  {
-    id: "4",
-    nome: "Pedro Almeida",
-    telefone: "(41) 95432-1098",
-    email: "pedro.almeida@email.com",
-    curso: "Medicina",
-    origem: "Site",
-    status: "quente",
-    etapa: "matricula",
-    ultimoContato: "1 hora atrás",
-  },
-  {
-    id: "5",
-    nome: "Carla Mendes",
-    telefone: "(51) 94321-0987",
-    email: "carla.mendes@email.com",
-    curso: "Psicologia",
-    origem: "Feira",
-    status: "matriculado",
-    etapa: "matricula",
-    ultimoContato: "Hoje",
-  },
-  {
-    id: "6",
-    nome: "Roberto Silva",
-    telefone: "(61) 93210-9876",
-    email: "roberto.silva@email.com",
-    curso: "Administração",
-    origem: "Site",
-    status: "morno",
-    etapa: "interesse",
-    ultimoContato: "3 dias atrás",
-  },
-];
+import { useLeadsPanel, type LeadFromSupabase } from "@/hooks/useLeadsPanel";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LeadsPanel() {
   const [, setLocation] = useLocation();
@@ -83,18 +15,60 @@ export default function LeadsPanel() {
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [cursoFilter, setCursoFilter] = useState<string>("todos");
   const [showLeadModal, setShowLeadModal] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Partial<LeadFromSupabase> | undefined>(undefined);
 
-  const filteredLeads = mockLeads.filter((lead) => {
-    const matchesSearch =
-      lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.telefone.includes(searchTerm) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const { leads, courses, origins, createLead, updateLead, isLoading } = useLeadsPanel();
 
-    const matchesStatus = statusFilter === "todos" || lead.status === statusFilter;
-    const matchesCurso = cursoFilter === "todos" || lead.curso === cursoFilter;
+  const handleSaveLead = (leadData: any) => {
+    if (leadData.id) {
+      updateLead.mutate(leadData);
+    } else {
+      createLead.mutate(leadData);
+    }
+  };
 
-    return matchesSearch && matchesStatus && matchesCurso;
-  });
+  const openNewLeadModal = () => {
+    setSelectedLead(undefined);
+    setShowLeadModal(true);
+  };
+
+  const openEditLeadModal = (lead: any) => {
+    const leadToEdit = leads?.find(l => l.id === lead.id);
+    setSelectedLead(leadToEdit);
+    setShowLeadModal(true);
+  };
+
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    
+    return leads.filter((lead) => {
+      const leadCourseId = lead.course_id;
+      const leadName = lead.name?.toLowerCase() || "";
+      const leadPhone = lead.phone || "";
+      const leadEmail = lead.email?.toLowerCase() || "";
+      const searchTermLower = searchTerm.toLowerCase();
+
+      const matchesSearch =
+        leadName.includes(searchTermLower) ||
+        leadPhone.includes(searchTerm) ||
+        leadEmail.includes(searchTermLower);
+
+      const matchesStatus = statusFilter === "todos" || lead.status === statusFilter;
+      const matchesCurso = cursoFilter === "todos" || leadCourseId === cursoFilter;
+
+      return matchesSearch && matchesStatus && matchesCurso;
+    }).map(lead => ({
+      id: lead.id,
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email,
+      courseName: lead.courses?.name || 'N/A',
+      origin: lead.origin,
+      status: lead.status || 'morno',
+      stage: lead.stage || 'contato',
+      last_contact_at: lead.last_contact_at,
+    }));
+  }, [leads, searchTerm, statusFilter, cursoFilter]);
 
   return (
     <div className="space-y-6">
@@ -103,7 +77,7 @@ export default function LeadsPanel() {
           <h1 className="text-3xl font-bold" data-testid="text-leads-title">Meus Leads</h1>
           <p className="text-muted-foreground mt-1">Gerencie e acompanhe seus leads</p>
         </div>
-        <Button data-testid="button-add-lead" onClick={() => setShowLeadModal(true)}>
+        <Button data-testid="button-add-lead" onClick={openNewLeadModal}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Lead
         </Button>
@@ -139,27 +113,29 @@ export default function LeadsPanel() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os cursos</SelectItem>
-            <SelectItem value="Administração">Administração</SelectItem>
-            <SelectItem value="Engenharia">Engenharia</SelectItem>
-            <SelectItem value="Direito">Direito</SelectItem>
-            <SelectItem value="Medicina">Medicina</SelectItem>
-            <SelectItem value="Psicologia">Psicologia</SelectItem>
+            {courses?.map(course => (
+              <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredLeads.map((lead) => (
-          <LeadCard
-            key={lead.id}
-            lead={lead}
-            onEdit={(l) => console.log("Edit lead:", l)}
-            onView={(l) => setLocation(`/lead/${l.id}`)}
-          />
-        ))}
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64" />)
+        ) : (
+          filteredLeads.map((lead) => (
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              onEdit={openEditLeadModal}
+              onView={(l) => setLocation(`/lead/${l.id}`)}
+            />
+          ))
+        )}
       </div>
 
-      {filteredLeads.length === 0 && (
+      {(!isLoading && filteredLeads.length === 0) && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Nenhum lead encontrado</p>
         </div>
@@ -168,7 +144,10 @@ export default function LeadsPanel() {
       <LeadFormModal
         open={showLeadModal}
         onClose={() => setShowLeadModal(false)}
-        onSave={(lead) => console.log("Saved lead:", lead)}
+        onSave={handleSaveLead}
+        lead={selectedLead}
+        courses={courses || []}
+        origins={origins || []}
       />
     </div>
   );
