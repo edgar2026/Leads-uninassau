@@ -5,60 +5,100 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StageBadge } from "@/components/StageBadge";
 import { InteractionModal } from "@/components/InteractionModal";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, MessageSquare, Edit, FilePlus } from "lucide-react";
-
-// TODO: remove mock functionality
-const mockLead = {
-  id: "1",
-  nome: "Maria Santos",
-  telefone: "(11) 98765-4321",
-  email: "maria.santos@email.com",
-  curso: "Administração",
-  origem: "Site",
-  status: "quente" as const,
-  etapa: "interesse" as const,
-  observacoes: "Interessada em turma noturna. Preferência por campus central.",
-  cadastradoEm: "15 de outubro de 2024",
-  responsavel: "João Silva",
-};
-
-const mockInteractions = [
-  {
-    id: "1",
-    tipo: "ligacao" as const,
-    descricao: "Ligação realizada para apresentação do curso. Lead demonstrou interesse.",
-    usuario: "João Silva",
-    data: "14/10/2024 15:30",
-  },
-  {
-    id: "2",
-    tipo: "email" as const,
-    descricao: "Enviado material informativo sobre grade curricular e valores.",
-    usuario: "João Silva",
-    data: "13/10/2024 10:15",
-  },
-  {
-    id: "3",
-    tipo: "whatsapp" as const,
-    descricao: "Lead entrou em contato perguntando sobre bolsas de estudo.",
-    usuario: "Sistema",
-    data: "12/10/2024 18:45",
-  },
-];
+import { ArrowLeft, Phone, Mail, Calendar, MessageSquare, Edit, FilePlus, Loader2 } from "lucide-react";
+import { useLeadDetail, Interaction } from "@/hooks/useLeadDetail";
+import { formatRelativeTime } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const interactionIcons = {
   ligacao: Phone,
   email: Mail,
   whatsapp: MessageSquare,
   reuniao: Calendar,
-  visita: MapPin,
+  visita: Calendar, // Usando Calendar para visita/reunião por enquanto
   cadastro: FilePlus,
+};
+
+const InteractionTimeline = ({ interactions }: { interactions: Interaction[] }) => {
+  return (
+    <div className="space-y-4">
+      {interactions.map((interaction) => {
+        const Icon = interactionIcons[interaction.type as keyof typeof interactionIcons] || MessageSquare;
+        return (
+          <div
+            key={interaction.id}
+            className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+            data-testid={`interaction-${interaction.id}`}
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm">{interaction.description || `Interação do tipo ${interaction.type}`}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {interaction.profiles?.full_name || "Usuário Desconhecido"} • {formatRelativeTime(interaction.created_at)}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+      {interactions.length === 0 && (
+        <p className="text-muted-foreground text-sm">Nenhuma interação registrada ainda.</p>
+      )}
+    </div>
+  );
 };
 
 export default function LeadDetail() {
   const [, params] = useRoute("/lead/:id");
+  const leadId = params?.id || "";
   const [, setLocation] = useLocation();
   const [showInteractionModal, setShowInteractionModal] = useState(false);
+
+  const { lead, isLoading, addInteraction } = useLeadDetail(leadId);
+
+  const handleSaveInteraction = (interaction: { tipo: string; descricao: string }) => {
+    if (leadId) {
+      addInteraction.mutate({
+        lead_id: leadId,
+        type: interaction.tipo,
+        description: interaction.descricao,
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-96" />
+          </div>
+          <Skeleton className="h-48" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!lead) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold">Lead não encontrado.</h2>
+        <Button variant="link" onClick={() => setLocation("/leads")}>
+          Voltar para a lista de Leads
+        </Button>
+      </div>
+    );
+  }
+
+  const leadStatus = lead.status || "morno";
+  const leadStageName = lead.lead_stages?.name?.toLowerCase().replace('í', 'i').replace('ã', 'a') as any || 'contato';
+  const leadOwner = lead.owner?.full_name || "N/A";
 
   return (
     <div className="space-y-6">
@@ -72,10 +112,10 @@ export default function LeadDetail() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold" data-testid="text-lead-name">{mockLead.nome}</h1>
-          <p className="text-muted-foreground mt-1">Cadastrado em {mockLead.cadastradoEm}</p>
+          <h1 className="text-3xl font-bold" data-testid="text-lead-name">{lead.name}</h1>
+          <p className="text-muted-foreground mt-1">Cadastrado em {lead.created_at ? formatRelativeTime(lead.created_at) : 'N/A'}</p>
         </div>
-        <Button variant="outline" data-testid="button-edit-lead">
+        <Button variant="outline" data-testid="button-edit-lead" onClick={() => console.log("TODO: Open Edit Modal")}>
           <Edit className="h-4 w-4 mr-2" />
           Editar Lead
         </Button>
@@ -93,41 +133,41 @@ export default function LeadDetail() {
                   <p className="text-sm font-medium text-muted-foreground mb-1">Telefone</p>
                   <p className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    {mockLead.telefone}
+                    {lead.phone || "N/A"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">E-mail</p>
                   <p className="flex items-center gap-2 truncate">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    {mockLead.email}
+                    {lead.email || "N/A"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Curso</p>
-                  <p>{mockLead.curso}</p>
+                  <p>{lead.courses?.name || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Origem</p>
-                  <p>{mockLead.origem}</p>
+                  <p>{lead.origins?.name || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Status</p>
-                  <StatusBadge status={mockLead.status} />
+                  <StatusBadge status={leadStatus} />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Etapa</p>
-                  <StageBadge stage={mockLead.etapa} />
+                  <StageBadge stage={leadStageName} />
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-sm font-medium text-muted-foreground mb-1">Responsável</p>
-                  <p>{mockLead.responsavel}</p>
+                  <p>{leadOwner}</p>
                 </div>
               </div>
-              {mockLead.observacoes && (
+              {lead.description && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Observações</p>
-                  <p className="text-sm bg-muted/50 p-3 rounded-md">{mockLead.observacoes}</p>
+                  <p className="text-sm bg-muted/50 p-3 rounded-md">{lead.description}</p>
                 </div>
               )}
             </CardContent>
@@ -140,34 +180,18 @@ export default function LeadDetail() {
                 size="sm"
                 onClick={() => setShowInteractionModal(true)}
                 data-testid="button-add-interaction"
+                disabled={addInteraction.isPending}
               >
-                <MessageSquare className="h-4 w-4 mr-2" />
+                {addInteraction.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                )}
                 Nova Interação
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockInteractions.map((interaction) => {
-                  const Icon = interactionIcons[interaction.tipo as keyof typeof interactionIcons];
-                  return (
-                    <div
-                      key={interaction.id}
-                      className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
-                      data-testid={`interaction-${interaction.id}`}
-                    >
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm">{interaction.descricao}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {interaction.usuario} • {interaction.data}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <InteractionTimeline interactions={lead.interactions} />
             </CardContent>
           </Card>
         </div>
@@ -181,7 +205,8 @@ export default function LeadDetail() {
               <Button 
                 variant="outline" 
                 className="w-full justify-start" 
-                onClick={() => window.open(`https://wa.me/55${mockLead.telefone.replace(/\D/g, '')}`, '_blank', 'noopener,noreferrer')}
+                onClick={() => lead.phone && window.open(`https://wa.me/55${lead.phone.replace(/\D/g, '')}`, '_blank', 'noopener,noreferrer')}
+                disabled={!lead.phone}
                 data-testid="button-whatsapp"
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
@@ -190,7 +215,8 @@ export default function LeadDetail() {
               <Button 
                 variant="outline" 
                 className="w-full justify-start" 
-                onClick={() => window.location.href = `mailto:${mockLead.email}`}
+                onClick={() => lead.email && (window.location.href = `mailto:${lead.email}`)}
+                disabled={!lead.email}
                 data-testid="button-email"
               >
                 <Mail className="h-4 w-4 mr-2" />
@@ -204,8 +230,8 @@ export default function LeadDetail() {
       <InteractionModal
         open={showInteractionModal}
         onClose={() => setShowInteractionModal(false)}
-        leadName={mockLead.nome}
-        onSave={(interaction) => console.log("Saved interaction:", interaction)}
+        leadName={lead.name}
+        onSave={handleSaveInteraction}
       />
     </div>
   );
