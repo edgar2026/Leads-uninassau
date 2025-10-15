@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,37 +8,63 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { LeadFromSupabase } from "@/hooks/useLeadsPanel";
 
-type Course = { id: string; name: string };
+type Course = { id: string; name: string; type: string };
 
 interface LeadFormModalProps {
   open: boolean;
   onClose: () => void;
-  lead?: Partial<LeadFromSupabase>;
+  lead?: Partial<LeadFromSupabase & { courses?: Course }>;
   onSave: (lead: any) => void;
   courses: Course[];
   origins: string[];
 }
 
 export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }: LeadFormModalProps) {
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, control, reset, watch, setValue, formState: { errors } } = useForm();
+
+  const watchedCourseType = watch("courseType");
+
+  const filteredCourses = useMemo(() => {
+    if (!watchedCourseType) return [];
+    if (watchedCourseType === 'Graduação') {
+      return courses.filter(c => c.type === 'Presencial' || c.type === 'EAD');
+    }
+    return courses.filter(c => c.type === watchedCourseType);
+  }, [courses, watchedCourseType]);
 
   useEffect(() => {
     if (open) {
+      const leadCourse = courses.find(c => c.id === lead?.course_id);
+      let courseType = '';
+      if (leadCourse) {
+        if (leadCourse.type === 'Pós-graduação') {
+          courseType = 'Pós-graduação';
+        } else {
+          courseType = 'Graduação';
+        }
+      }
+
       reset({
         name: lead?.name || "",
         phone: lead?.phone || "",
         email: lead?.email || "",
+        courseType: courseType,
         course_id: lead?.course_id || "",
         origin: lead?.origin || "",
         status: lead?.status || "morno",
         stage: lead?.stage || "contato",
-        // observacoes: "", // Note: 'observacoes' is not in the leads table
       });
     }
-  }, [open, lead, reset]);
+  }, [open, lead, courses, reset]);
+
+  useEffect(() => {
+    // Reseta o curso selecionado quando o tipo de curso muda
+    setValue('course_id', '');
+  }, [watchedCourseType, setValue]);
 
   const onSubmit = (data: any) => {
-    onSave({ id: lead?.id, ...data });
+    const { courseType, ...leadData } = data;
+    onSave({ id: lead?.id, ...leadData });
     onClose();
   };
 
@@ -62,9 +88,29 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
               <Label htmlFor="phone">Telefone / WhatsApp</Label>
               <Input id="phone" {...register("phone")} placeholder="(00) 00000-0000" data-testid="input-telefone" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" {...register("email")} data-testid="input-email" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="courseType">Tipo de Curso *</Label>
+              <Controller
+                name="courseType"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger data-testid="select-tipo-curso">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Graduação">Graduação</SelectItem>
+                      <SelectItem value="Pós-graduação">Pós-graduação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.courseType && <p className="text-red-500 text-xs">Tipo é obrigatório</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="course_id">Curso de Interesse *</Label>
@@ -73,12 +119,12 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!watchedCourseType}>
                     <SelectTrigger data-testid="select-curso">
                       <SelectValue placeholder="Selecione o curso" />
                     </SelectTrigger>
                     <SelectContent>
-                      {courses.map(course => (
+                      {filteredCourses.map(course => (
                         <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -129,7 +175,7 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
                 )}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="stage">Etapa do Funil *</Label>
               <Controller
                 name="stage"
@@ -149,10 +195,6 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
                 )}
               />
             </div>
-            {/* <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes">Observações</Label>
-              <Textarea id="observacoes" {...register("observacoes")} placeholder="Adicione observações sobre o lead..." className="min-h-24" data-testid="textarea-observacoes" />
-            </div> */}
           </div>
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose} data-testid="button-cancel">

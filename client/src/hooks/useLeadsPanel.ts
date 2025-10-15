@@ -38,7 +38,7 @@ export function useLeadsPanel() {
   const { data: courses, isLoading: isLoadingCourses } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("id, name");
+      const { data, error } = await supabase.from("courses").select("id, name, type");
       if (error) throw new Error(error.message);
       return data || [];
     },
