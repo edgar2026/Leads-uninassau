@@ -60,7 +60,10 @@ export function DashboardFilters({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto" align="start">
+          <div className="p-4 pb-2 text-sm text-muted-foreground">
+            Selecione a data de início e a data de fim.
+          </div>
           <Calendar
             initialFocus
             mode="range"
@@ -68,6 +71,7 @@ export function DashboardFilters({
             selected={dateRange}
             onSelect={onDateChange}
             numberOfMonths={2}
+            locale={ptBR}
           />
         </PopoverContent>
       </Popover>
