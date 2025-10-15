@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRelativeTime } from "@/lib/utils";
+import { startOfWeek, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // --- Funções de busca de dados ---
 
@@ -135,6 +137,49 @@ const fetchRecentActivity = async () => {
     }));
 };
 
+const fetchConversionData = async () => {
+  const [profilesRes, leadsRes] = await Promise.all([
+    supabase.from('profiles').select('id, full_name'),
+    supabase.from('leads').select('owner_id, last_contact_at').eq('status', 'matriculado')
+  ]);
+
+  if (profilesRes.error) throw new Error(profilesRes.error.message);
+  if (leadsRes.error) throw new Error(leadsRes.error.message);
+
+  const profiles = profilesRes.data;
+  const leads = leadsRes.data;
+
+  const profileMap = new Map(profiles.map(p => [p.id, p.full_name || 'Sem Vendedor']));
+  const vendedores = [...new Set(profiles.map(p => p.full_name || 'Sem Vendedor'))];
+
+  const weeklyData = leads.reduce((acc, lead) => {
+    if (!lead.last_contact_at || !lead.owner_id) return acc;
+
+    const conversionDate = new Date(lead.last_contact_at);
+    const weekStartDate = startOfWeek(conversionDate, { locale: ptBR });
+    const weekLabel = `Sem ${format(weekStartDate, 'w', { locale: ptBR })}`;
+    
+    const sellerName = profileMap.get(lead.owner_id) || 'Sem Vendedor';
+
+    if (!acc[weekLabel]) acc[weekLabel] = {};
+    acc[weekLabel][sellerName] = (acc[weekLabel][sellerName] || 0) + 1;
+
+    return acc;
+  }, {} as Record<string, Record<string, number>>);
+
+  const chartData = Object.entries(weeklyData)
+    .map(([periodo, sellerData]) => ({ periodo, ...sellerData }))
+    .sort((a, b) => parseInt(a.periodo.split(' ')[1]) - parseInt(b.periodo.split(' ')[1]));
+
+  chartData.forEach(dataPoint => {
+      vendedores.forEach(vendedor => {
+          if (!dataPoint[vendedor]) dataPoint[vendedor] = 0;
+      });
+  });
+
+  return { chartData, vendedores };
+};
+
 // --- O Hook ---
 
 export function useDashboardData() {
@@ -144,6 +189,7 @@ export function useDashboardData() {
     const originQuery = useQuery({ queryKey: ['originData'], queryFn: fetchOriginData });
     const rankingQuery = useQuery({ queryKey: ['rankingData'], queryFn: fetchRankingData });
     const activityQuery = useQuery({ queryKey: ['recentActivity'], queryFn: fetchRecentActivity });
+    const conversionQuery = useQuery({ queryKey: ['conversionData'], queryFn: fetchConversionData });
 
     return {
         stats: statsQuery.data,
@@ -152,12 +198,14 @@ export function useDashboardData() {
         originData: originQuery.data,
         rankingData: rankingQuery.data,
         activityData: activityQuery.data,
+        conversionData: conversionQuery.data,
         isLoading: 
             statsQuery.isLoading ||
             funnelQuery.isLoading ||
             temperatureQuery.isLoading ||
             originQuery.isLoading ||
             rankingQuery.isLoading ||
-            activityQuery.isLoading,
+            activityQuery.isLoading ||
+            conversionQuery.isLoading,
     };
 }

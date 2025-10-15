@@ -9,14 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Users, TrendingUp, UserCheck, Clock } from "lucide-react";
 
-// O gráfico de conversão por período é mais complexo e será implementado futuramente.
-const mockConversionData = [
-  { periodo: "Sem 1", "Vendedor 1": 12, "Vendedor 2": 15 },
-  { periodo: "Sem 2", "Vendedor 1": 15, "Vendedor 2": 18 },
-  { periodo: "Sem 3", "Vendedor 1": 18, "Vendedor 2": 14 },
-  { periodo: "Sem 4", "Vendedor 1": 20, "Vendedor 2": 20 },
-];
-
 export default function Dashboard() {
   const {
     stats,
@@ -25,6 +17,7 @@ export default function Dashboard() {
     originData,
     rankingData,
     activityData,
+    conversionData,
     isLoading,
   } = useDashboardData();
 
@@ -63,7 +56,11 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {isLoading ? <Skeleton className="h-[400px]" /> : <ConversionChart data={mockConversionData} vendedores={["Vendedor 1", "Vendedor 2"]} />}
+        {isLoading || !conversionData ? (
+          <Skeleton className="h-[400px]" />
+        ) : (
+          <ConversionChart data={conversionData.chartData} vendedores={conversionData.vendedores} />
+        )}
         {isLoading || !originData ? <Skeleton className="h-[400px]" /> : <LeadsByOriginChart data={originData} />}
       </div>
 
