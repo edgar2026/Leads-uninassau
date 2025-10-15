@@ -24,6 +24,7 @@ export type DetailedLead = LeadFromSupabase & {
 };
 
 const fetchLeadDetails = async (leadId: string): Promise<DetailedLead> => {
+  // Consulta simplificada para garantir que o lead principal seja carregado
   const { data: leadData, error: leadError } = await supabase
     .from("leads")
     .select(`
@@ -31,13 +32,24 @@ const fetchLeadDetails = async (leadId: string): Promise<DetailedLead> => {
       origins(name),
       lead_stages(name),
       courses(name),
-      owner:profiles!owner_id(full_name)
+      owner_id
     `)
     .eq("id", leadId)
     .single();
 
   if (leadError) throw new Error(`Erro ao buscar lead: ${leadError.message}`);
   if (!leadData) throw new Error("Lead não encontrado.");
+
+  // Busca o nome do responsável separadamente, se houver owner_id
+  let ownerProfile = null;
+  if (leadData.owner_id) {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", leadData.owner_id)
+      .single();
+    ownerProfile = profileData;
+  }
 
   const { data: interactionsData, error: interactionsError } = await supabase
     .from("interactions")
@@ -52,7 +64,7 @@ const fetchLeadDetails = async (leadId: string): Promise<DetailedLead> => {
 
   return {
     ...leadData,
-    owner: leadData.owner as { full_name: string } | null,
+    owner: ownerProfile, // Adiciona o perfil do responsável
     interactions: interactionsData as Interaction[],
   } as DetailedLead;
 };
