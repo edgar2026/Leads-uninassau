@@ -7,6 +7,7 @@ import { RankingTable } from "@/components/RankingTable";
 import { TemperatureDistribution } from "@/components/TemperatureDistribution";
 import { RecentActivity } from "@/components/RecentActivity";
 import { LeadsByOriginChart } from "@/components/LeadsByOriginChart";
+import { LeadsByCourseTypeChart } from "@/components/LeadsByCourseTypeChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { DashboardFilters } from "@/components/DashboardFilters";
@@ -24,6 +25,7 @@ export default function Dashboard() {
     rankingData,
     activityData,
     conversionData,
+    leadsByCourseType,
     isLoading,
   } = useDashboardData({ dateRange, courseType });
 
@@ -76,7 +78,7 @@ export default function Dashboard() {
         ) : (
           <ConversionChart data={conversionData.chartData} consultores={conversionData.consultores} />
         )}
-        {isLoading || !originData ? <Skeleton className="h-[400px]" /> : <LeadsByOriginChart data={originData} />}
+        {isLoading || !leadsByCourseType ? <Skeleton className="h-[400px]" /> : <LeadsByCourseTypeChart data={leadsByCourseType} />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

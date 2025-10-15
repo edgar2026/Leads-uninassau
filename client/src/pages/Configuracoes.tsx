@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Plus } from "lucide-react";
-import { useAdminManagement, type Course, type Origin } from "@/hooks/useAdminManagement";
+import { useAdminManagement, type Course, type Origin, type CourseType, type LeadStage } from "@/hooks/useAdminManagement";
 import { ManagementTable } from "@/components/ManagementTable";
 import { ManagementFormModal } from "@/components/ManagementFormModal";
 import {
@@ -24,24 +24,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type Item = Course | Origin | CourseType | LeadStage;
+type EntityType = 'courses' | 'origins' | 'course_types' | 'lead_stages';
+
 type ModalState = {
   isOpen: boolean;
-  item?: Course | Origin;
-  type: 'course' | 'origin' | null;
+  item?: Item;
+  type: EntityType | null;
 };
 
 type DeleteDialogState = {
   isOpen: boolean;
-  item?: Course | Origin;
-  type: 'course' | 'origin' | null;
+  item?: Item;
+  type: EntityType | null;
 };
 
 export default function Configuracoes() {
-  const { courses, origins, isLoading, createEntity, updateEntity, deleteEntity } = useAdminManagement();
+  const { courses, origins, courseTypes, leadStages, isLoading, createEntity, updateEntity, deleteEntity } = useAdminManagement();
   const [modalState, setModalState] = useState<ModalState>({ isOpen: false, type: null });
   const [deleteDialogState, setDeleteDialogState] = useState<DeleteDialogState>({ isOpen: false, type: null });
 
-  const openModal = (type: 'course' | 'origin', item?: Course | Origin) => {
+  const openModal = (type: EntityType, item?: Item) => {
     setModalState({ isOpen: true, type, item });
   };
 
@@ -49,7 +52,7 @@ export default function Configuracoes() {
     setModalState({ isOpen: false, type: null, item: undefined });
   };
 
-  const openDeleteDialog = (type: 'course' | 'origin', item: Course | Origin) => {
+  const openDeleteDialog = (type: EntityType, item: Item) => {
     setDeleteDialogState({ isOpen: true, type, item });
   };
 
@@ -57,19 +60,19 @@ export default function Configuracoes() {
     setDeleteDialogState({ isOpen: false, type: null, item: undefined });
   };
 
-  const handleSave = (data: { id?: string; name: string; type?: string }) => {
-    const entity = modalState.type === 'course' ? 'courses' : 'origins';
-    if (data.id) {
-      updateEntity.mutate({ entity, id: data.id, name: data.name, type: data.type });
-    } else {
-      createEntity.mutate({ entity, name: data.name, type: data.type });
+  const handleSave = (data: { id?: string; name: string; type_id?: string }) => {
+    if (modalState.type) {
+      if (data.id) {
+        updateEntity.mutate({ entity: modalState.type, id: data.id, name: data.name, type_id: data.type_id });
+      } else {
+        createEntity.mutate({ entity: modalState.type, name: data.name, type_id: data.type_id });
+      }
     }
   };
 
   const handleDelete = () => {
     if (deleteDialogState.item && deleteDialogState.type) {
-      const entity = deleteDialogState.type === 'course' ? 'courses' : 'origins';
-      deleteEntity.mutate({ entity, id: deleteDialogState.item.id });
+      deleteEntity.mutate({ entity: deleteDialogState.type, id: deleteDialogState.item.id });
       closeDeleteDialog();
     }
   };
@@ -100,16 +103,16 @@ export default function Configuracoes() {
               <CardTitle>Gerenciar Cursos</CardTitle>
               <CardDescription>Adicione, edite ou remova cursos.</CardDescription>
             </div>
-            <Button size="sm" onClick={() => openModal('course')}>
+            <Button size="sm" onClick={() => openModal('courses')}>
               <Plus className="h-4 w-4 mr-2" /> Novo Curso
             </Button>
           </CardHeader>
           <CardContent>
             <ManagementTable
-              data={courses}
+              data={courses?.map(c => ({...c, type: (c as any).course_types?.name}))}
               isLoading={isLoading}
-              onEdit={(item) => openModal('course', item)}
-              onDelete={(item) => openDeleteDialog('course', item)}
+              onEdit={(item) => openModal('courses', item)}
+              onDelete={(item) => openDeleteDialog('courses', item)}
               headers={["Nome", "Tipo"]}
             />
           </CardContent>
@@ -121,7 +124,7 @@ export default function Configuracoes() {
               <CardTitle>Gerenciar Origens de Lead</CardTitle>
               <CardDescription>Adicione, edite ou remova as origens dos leads.</CardDescription>
             </div>
-            <Button size="sm" onClick={() => openModal('origin')}>
+            <Button size="sm" onClick={() => openModal('origins')}>
               <Plus className="h-4 w-4 mr-2" /> Nova Origem
             </Button>
           </CardHeader>
@@ -129,8 +132,50 @@ export default function Configuracoes() {
             <ManagementTable
               data={origins}
               isLoading={isLoading}
-              onEdit={(item) => openModal('origin', item)}
-              onDelete={(item) => openDeleteDialog('origin', item)}
+              onEdit={(item) => openModal('origins', item)}
+              onDelete={(item) => openDeleteDialog('origins', item)}
+              headers={["Nome"]}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Tipos de Curso</CardTitle>
+              <CardDescription>Adicione ou remova os tipos de curso (ex: EAD).</CardDescription>
+            </div>
+            <Button size="sm" onClick={() => openModal('course_types')}>
+              <Plus className="h-4 w-4 mr-2" /> Novo Tipo
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <ManagementTable
+              data={courseTypes}
+              isLoading={isLoading}
+              onEdit={(item) => openModal('course_types', item)}
+              onDelete={(item) => openDeleteDialog('course_types', item)}
+              headers={["Nome"]}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Etapas do Funil</CardTitle>
+              <CardDescription>Personalize as etapas do seu funil de vendas.</CardDescription>
+            </div>
+            <Button size="sm" onClick={() => openModal('lead_stages')}>
+              <Plus className="h-4 w-4 mr-2" /> Nova Etapa
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <ManagementTable
+              data={leadStages}
+              isLoading={isLoading}
+              onEdit={(item) => openModal('lead_stages', item)}
+              onDelete={(item) => openDeleteDialog('lead_stages', item)}
               headers={["Nome"]}
             />
           </CardContent>
@@ -142,8 +187,13 @@ export default function Configuracoes() {
         onClose={closeModal}
         onSave={handleSave}
         item={modalState.item}
-        title={modalState.type === 'course' ? 'Curso' : 'Origem'}
-        hasType={modalState.type === 'course'}
+        title={
+          modalState.type === 'courses' ? 'Curso' :
+          modalState.type === 'origins' ? 'Origem' :
+          modalState.type === 'course_types' ? 'Tipo de Curso' : 'Etapa do Funil'
+        }
+        hasTypeField={modalState.type === 'courses'}
+        courseTypes={courseTypes}
       />
 
       <AlertDialog open={deleteDialogState.isOpen} onOpenChange={closeDeleteDialog}>

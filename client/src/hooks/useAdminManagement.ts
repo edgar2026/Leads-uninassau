@@ -2,8 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type Course = { id: string; name: string; type: string };
+export type Course = { id: string; name: string; type_id: string };
 export type Origin = { id: string; name: string };
+export type CourseType = { id: string; name: string };
+export type LeadStage = { id: string; name: string };
 
 export function useAdminManagement() {
   const { toast } = useToast();
@@ -13,7 +15,7 @@ export function useAdminManagement() {
   const { data: courses, isLoading: isLoadingCourses } = useQuery<Course[]>({
     queryKey: ["courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("*").order("name");
+      const { data, error } = await supabase.from("courses").select("*, course_types(name)").order("name");
       if (error) throw new Error(error.message);
       return data || [];
     },
@@ -28,11 +30,29 @@ export function useAdminManagement() {
     },
   });
 
+  const { data: courseTypes, isLoading: isLoadingCourseTypes } = useQuery<CourseType[]>({
+    queryKey: ["course_types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("course_types").select("*").order("name");
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+  });
+
+  const { data: leadStages, isLoading: isLoadingLeadStages } = useQuery<LeadStage[]>({
+    queryKey: ["lead_stages"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("lead_stages").select("*").order("name");
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+  });
+
   // --- MUTATIONS ---
   const createEntity = useMutation({
-    mutationFn: async ({ entity, name, type }: { entity: 'courses' | 'origins', name: string, type?: string }) => {
-      const payload: { name: string; type?: string } = { name };
-      if (type) payload.type = type;
+    mutationFn: async ({ entity, name, type_id }: { entity: 'courses' | 'origins' | 'course_types' | 'lead_stages', name: string, type_id?: string }) => {
+      const payload: { name: string; type_id?: string } = { name };
+      if (type_id) payload.type_id = type_id;
       const { error } = await supabase.from(entity).insert(payload);
       if (error) throw new Error(error.message);
     },
@@ -46,9 +66,9 @@ export function useAdminManagement() {
   });
 
   const updateEntity = useMutation({
-    mutationFn: async ({ entity, id, name, type }: { entity: 'courses' | 'origins', id: string, name: string, type?: string }) => {
-      const payload: { name: string; type?: string } = { name };
-      if (type) payload.type = type;
+    mutationFn: async ({ entity, id, name, type_id }: { entity: 'courses' | 'origins' | 'course_types' | 'lead_stages', id: string, name: string, type_id?: string }) => {
+      const payload: { name: string; type_id?: string } = { name };
+      if (type_id) payload.type_id = type_id;
       const { error } = await supabase.from(entity).update(payload).eq("id", id);
       if (error) throw new Error(error.message);
     },
@@ -62,7 +82,7 @@ export function useAdminManagement() {
   });
 
   const deleteEntity = useMutation({
-    mutationFn: async ({ entity, id }: { entity: 'courses' | 'origins', id: string }) => {
+    mutationFn: async ({ entity, id }: { entity: 'courses' | 'origins' | 'course_types' | 'lead_stages', id: string }) => {
       const { error } = await supabase.from(entity).delete().eq("id", id);
       if (error) throw new Error(error.message);
     },
@@ -78,7 +98,9 @@ export function useAdminManagement() {
   return {
     courses,
     origins,
-    isLoading: isLoadingCourses || isLoadingOrigins,
+    courseTypes,
+    leadStages,
+    isLoading: isLoadingCourses || isLoadingOrigins || isLoadingCourseTypes || isLoadingLeadStages,
     createEntity,
     updateEntity,
     deleteEntity,

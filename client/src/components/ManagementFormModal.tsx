@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,23 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface ManagementFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { id?: string; name: string; type?: string }) => void;
-  item?: { id?: string; name?: string; type?: string };
+  onSave: (data: { id?: string; name: string; type_id?: string }) => void;
+  item?: { id?: string; name?: string; type_id?: string };
   title: string;
-  hasType?: boolean;
+  hasTypeField?: boolean;
+  courseTypes?: { id: string; name: string }[];
 }
 
-export function ManagementFormModal({ open, onClose, onSave, item, title, hasType = false }: ManagementFormModalProps) {
+export function ManagementFormModal({ open, onClose, onSave, item, title, hasTypeField = false, courseTypes = [] }: ManagementFormModalProps) {
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
 
   useEffect(() => {
     if (open) {
       reset({
         name: item?.name || "",
-        type: item?.type || (hasType ? "Presencial" : undefined),
+        type_id: item?.type_id || (hasTypeField && courseTypes.length > 0 ? courseTypes[0].id : undefined),
       });
     }
-  }, [open, item, reset, hasType]);
+  }, [open, item, reset, hasTypeField, courseTypes]);
 
   const onSubmit = (data: any) => {
     onSave({ id: item?.id, ...data });
@@ -44,19 +45,27 @@ export function ManagementFormModal({ open, onClose, onSave, item, title, hasTyp
             <Input id="name" {...register("name", { required: "Nome é obrigatório" })} />
             {errors.name && <p className="text-sm text-red-500">{(errors.name as any).message}</p>}
           </div>
-          {hasType && (
+          {hasTypeField && (
             <div className="space-y-2">
-              <Label htmlFor="type">Tipo</Label>
-              <Select name="type" defaultValue={item?.type || "Presencial"} onValueChange={(value) => control.setValue('type', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Presencial">Presencial</SelectItem>
-                  <SelectItem value="EAD">EAD</SelectItem>
-                  <SelectItem value="Pós-graduação">Pós-graduação</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="type_id">Tipo</Label>
+              <Controller
+                name="type_id"
+                control={control}
+                rules={{ required: "Tipo é obrigatório" }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courseTypes.map(type => (
+                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.type_id && <p className="text-sm text-red-500">{(errors.type_id as any).message}</p>}
             </div>
           )}
           <DialogFooter>
