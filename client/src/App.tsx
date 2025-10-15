@@ -13,7 +13,6 @@ import LeadsPanel from "@/pages/LeadsPanel";
 import LeadDetail from "@/pages/LeadDetail";
 import Cursos from "@/pages/Cursos";
 import Configuracoes from "@/pages/Configuracoes";
-import UserManagement from "@/pages/UserManagement";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
@@ -50,9 +49,6 @@ function Router() {
       </Route>
       <Route path="/configuracoes">
         {profile?.role === 'Administrador' ? <MainLayout><Configuracoes /></MainLayout> : <Redirect to="/" />}
-      </Route>
-      <Route path="/usuarios">
-        {profile?.role === 'Administrador' ? <MainLayout><UserManagement /></MainLayout> : <Redirect to="/" />}
       </Route>
       <Route>
         <MainLayout><NotFound /></MainLayout>

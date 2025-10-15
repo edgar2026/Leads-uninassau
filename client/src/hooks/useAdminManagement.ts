@@ -6,6 +6,7 @@ export type Course = { id: string; name: string; type_id: string };
 export type Origin = { id: string; name: string };
 export type CourseType = { id: string; name: string };
 export type LeadStage = { id: string; name: string };
+export type Profile = { id: string; full_name: string; role: string };
 
 export function useAdminManagement() {
   const { toast } = useToast();
@@ -43,6 +44,15 @@ export function useAdminManagement() {
     queryKey: ["lead_stages"],
     queryFn: async () => {
       const { data, error } = await supabase.from("lead_stages").select("*").order("name");
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+  });
+
+  const { data: profiles, isLoading: isLoadingProfiles } = useQuery<Profile[]>({
+    queryKey: ["all_profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, full_name, role");
       if (error) throw new Error(error.message);
       return data || [];
     },
@@ -95,14 +105,30 @@ export function useAdminManagement() {
     },
   });
 
+  const updateUserRole = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+      const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", userId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Sucesso!", description: "O cargo do usuário foi atualizado." });
+      queryClient.invalidateQueries({ queryKey: ["all_profiles"] });
+    },
+    onError: (error) => {
+      toast({ title: "Erro", description: `Não foi possível atualizar o cargo: ${error.message}`, variant: "destructive" });
+    },
+  });
+
   return {
     courses,
     origins,
     courseTypes,
     leadStages,
-    isLoading: isLoadingCourses || isLoadingOrigins || isLoadingCourseTypes || isLoadingLeadStages,
+    profiles,
+    isLoading: isLoadingCourses || isLoadingOrigins || isLoadingCourseTypes || isLoadingLeadStages || isLoadingProfiles,
     createEntity,
     updateEntity,
     deleteEntity,
+    updateUserRole,
   };
 }

@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Settings, GraduationCap, LogOut, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, Settings, GraduationCap, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -32,12 +32,6 @@ const menuItems = [
     url: "/cursos",
     icon: GraduationCap,
     roles: ["Administrador", "Diretor", "Coordenador", "QG", "Comercial"],
-  },
-  {
-    title: "Gerenciar Usuários",
-    url: "/usuarios",
-    icon: UserCog,
-    roles: ["Administrador"],
   },
   {
     title: "Configurações",

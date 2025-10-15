@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Plus } from "lucide-react";
-import { useAdminManagement, type Course, type Origin, type CourseType, type LeadStage } from "@/hooks/useAdminManagement";
+import { useAdminManagement, type Course, type Origin, type CourseType, type LeadStage, type Profile } from "@/hooks/useAdminManagement";
 import { ManagementTable } from "@/components/ManagementTable";
 import { ManagementFormModal } from "@/components/ManagementFormModal";
 import {
@@ -23,6 +23,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Item = Course | Origin | CourseType | LeadStage;
 type EntityType = 'courses' | 'origins' | 'course_types' | 'lead_stages';
@@ -40,7 +56,7 @@ type DeleteDialogState = {
 };
 
 export default function Configuracoes() {
-  const { courses, origins, courseTypes, leadStages, isLoading, createEntity, updateEntity, deleteEntity } = useAdminManagement();
+  const { courses, origins, courseTypes, leadStages, profiles, isLoading, createEntity, updateEntity, deleteEntity, updateUserRole } = useAdminManagement();
   const [modalState, setModalState] = useState<ModalState>({ isOpen: false, type: null });
   const [deleteDialogState, setDeleteDialogState] = useState<DeleteDialogState>({ isOpen: false, type: null });
 
@@ -77,6 +93,10 @@ export default function Configuracoes() {
     }
   };
 
+  const handleRoleChange = (userId: string, newRole: string) => {
+    updateUserRole.mutate({ userId, newRole });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -94,6 +114,58 @@ export default function Configuracoes() {
               <Label>Tema (Claro/Escuro)</Label>
               <ThemeToggle />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Gerenciamento de Usuários</CardTitle>
+            <CardDescription>
+              Visualize e edite os cargos dos usuários do sistema.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead className="w-[200px]">Cargo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  profiles?.map((profile) => (
+                    <TableRow key={profile.id}>
+                      <TableCell className="font-medium">{profile.full_name}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={profile.role}
+                          onValueChange={(newRole) => handleRoleChange(profile.id, newRole)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Administrador">Administrador</SelectItem>
+                            <SelectItem value="Diretor">Diretor</SelectItem>
+                            <SelectItem value="Coordenador">Coordenador</SelectItem>
+                            <SelectItem value="QG">QG</SelectItem>
+                            <SelectItem value="Comercial">Comercial</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
