@@ -70,7 +70,7 @@ export function DashboardFilters({
             defaultMonth={dateRange?.from}
             selected={dateRange}
             onSelect={onDateChange}
-            numberOfMonths={2}
+            numberOfMonths={1}
             locale={ptBR}
           />
         </PopoverContent>
