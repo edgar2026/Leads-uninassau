@@ -11,12 +11,13 @@ export type LeadFromSupabase = {
   course_id: string | null;
   origin_id: string | null;
   status: "quente" | "morno" | "frio" | "perdido" | "matriculado" | null;
-  stage: "contato" | "interesse" | "prova" | "matricula" | null;
+  stage_id: string | null;
   owner_id: string | null;
   created_at: string | null;
   last_contact_at: string | null;
-  courses: { name: string; type: string } | null;
+  courses: { name: string; type_id: string; course_types: { name: string } | null } | null;
   origins: { name: string } | null;
+  lead_stages: { name: string } | null;
   profiles: { full_name: string } | null;
 };
 
@@ -30,7 +31,7 @@ export function useLeadsPanel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("*, courses(name, type), origins(name), profiles(full_name)");
+        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name), profiles(full_name)");
       if (error) throw new Error(error.message);
       return data || [];
     },
@@ -39,7 +40,7 @@ export function useLeadsPanel() {
   const { data: courses, isLoading: isLoadingCourses } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("id, name, type").order("name");
+      const { data, error } = await supabase.from("courses").select("id, name, type_id").order("name");
       if (error) throw new Error(error.message);
       return data || [];
     },
@@ -50,7 +51,25 @@ export function useLeadsPanel() {
     queryFn: async () => {
       const { data, error } = await supabase.from("origins").select("id, name").order("name");
       if (error) throw new Error(error.message);
-      return data.map((item: { id: string; name: string }) => item) || [];
+      return data || [];
+    },
+  });
+
+  const { data: courseTypes, isLoading: isLoadingCourseTypes } = useQuery({
+    queryKey: ["course_types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("course_types").select("id, name").order("name");
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+  });
+
+  const { data: leadStages, isLoading: isLoadingLeadStages } = useQuery({
+    queryKey: ["lead_stages"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("lead_stages").select("id, name").order("name");
+      if (error) throw new Error(error.message);
+      return data || [];
     },
   });
 
@@ -87,8 +106,10 @@ export function useLeadsPanel() {
     leads,
     courses,
     origins,
+    courseTypes,
+    leadStages,
     createLead,
     updateLead,
-    isLoading: isLoadingLeads || isLoadingCourses || isLoadingOrigins,
+    isLoading: isLoadingLeads || isLoadingCourses || isLoadingOrigins || isLoadingCourseTypes || isLoadingLeadStages,
   };
 }

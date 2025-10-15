@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { LeadFromSupabase } from "@/hooks/useLeadsPanel";
 
-type Course = { id: string; name: string; type: string };
+type Course = { id: string; name: string; type_id: string };
 type Origin = { id: string; name: string };
+type CourseType = { id: string; name: string };
+type LeadStage = { id: string; name: string };
 
 interface LeadFormModalProps {
   open: boolean;
@@ -17,42 +19,32 @@ interface LeadFormModalProps {
   onSave: (lead: any) => void;
   courses: Course[];
   origins: Origin[];
+  courseTypes: CourseType[];
+  leadStages: LeadStage[];
 }
 
-export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }: LeadFormModalProps) {
+export function LeadFormModal({ open, onClose, lead, onSave, courses, origins, courseTypes, leadStages }: LeadFormModalProps) {
   const { register, handleSubmit, control, reset, watch, setValue, formState: { errors } } = useForm();
 
-  const watchedCourseType = watch("courseType");
+  const watchedCourseType = watch("course_type_id");
 
   const filteredCourses = useMemo(() => {
     if (!watchedCourseType) return [];
-    if (watchedCourseType === 'Graduação') {
-      return courses.filter(c => c.type === 'Presencial' || c.type === 'EAD');
-    }
-    return courses.filter(c => c.type === watchedCourseType);
+    return courses.filter(c => c.type_id === watchedCourseType);
   }, [courses, watchedCourseType]);
 
   useEffect(() => {
     if (open) {
       const leadCourse = courses.find(c => c.id === lead?.course_id);
-      let courseType = '';
-      if (leadCourse) {
-        if (leadCourse.type === 'Pós-graduação') {
-          courseType = 'Pós-graduação';
-        } else {
-          courseType = 'Graduação';
-        }
-      }
-
       reset({
         name: lead?.name || "",
         phone: lead?.phone || "",
         email: lead?.email || "",
-        courseType: courseType,
+        course_type_id: leadCourse?.type_id || "",
         course_id: lead?.course_id || "",
-        origin: lead?.origin_id || "",
+        origin_id: lead?.origin_id || "",
         status: lead?.status || "morno",
-        stage: lead?.stage || "contato",
+        stage_id: lead?.stage_id || "",
       });
     }
   }, [open, lead, courses, reset]);
@@ -62,7 +54,7 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
   }, [watchedCourseType, setValue]);
 
   const onSubmit = (data: any) => {
-    const { courseType, ...leadData } = data;
+    const { course_type_id, ...leadData } = data;
     onSave({ id: lead?.id, ...leadData });
     onClose();
   };
@@ -92,9 +84,9 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
               <Input id="email" type="email" {...register("email")} data-testid="input-email" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="courseType">Tipo de Curso *</Label>
+              <Label htmlFor="course_type_id">Tipo de Curso *</Label>
               <Controller
-                name="courseType"
+                name="course_type_id"
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
@@ -103,13 +95,14 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Graduação">Graduação</SelectItem>
-                      <SelectItem value="Pós-graduação">Pós-graduação</SelectItem>
+                      {courseTypes.map(type => (
+                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
-              {errors.courseType && <p className="text-red-500 text-xs">Tipo é obrigatório</p>}
+              {errors.course_type_id && <p className="text-red-500 text-xs">Tipo é obrigatório</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="course_id">Curso de Interesse *</Label>
@@ -133,9 +126,9 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
               {errors.course_id && <p className="text-red-500 text-xs">Curso é obrigatório</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="origin">Origem do Lead *</Label>
+              <Label htmlFor="origin_id">Origem do Lead *</Label>
               <Controller
-                name="origin"
+                name="origin_id"
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
@@ -151,7 +144,7 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
                   </Select>
                 )}
               />
-               {errors.origin && <p className="text-red-500 text-xs">Origem é obrigatória</p>}
+               {errors.origin_id && <p className="text-red-500 text-xs">Origem é obrigatória</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status *</Label>
@@ -175,24 +168,25 @@ export function LeadFormModal({ open, onClose, lead, onSave, courses, origins }:
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="stage">Etapa do Funil *</Label>
+              <Label htmlFor="stage_id">Etapa do Funil *</Label>
               <Controller
-                name="stage"
+                name="stage_id"
                 control={control}
+                rules={{ required: true }}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger data-testid="select-etapa">
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione a etapa" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="contato">Contato</SelectItem>
-                      <SelectItem value="interesse">Interesse</SelectItem>
-                      <SelectItem value="prova">Prova</SelectItem>
-                      <SelectItem value="matricula">Matrícula</SelectItem>
+                      {leadStages.map(stage => (
+                        <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
+              {errors.stage_id && <p className="text-red-500 text-xs">Etapa é obrigatória</p>}
             </div>
           </div>
           <DialogFooter className="gap-2">

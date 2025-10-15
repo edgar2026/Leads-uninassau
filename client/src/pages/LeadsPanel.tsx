@@ -17,14 +17,13 @@ export default function LeadsPanel() {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Partial<LeadFromSupabase> | undefined>(undefined);
 
-  const { leads, courses, origins, createLead, updateLead, isLoading } = useLeadsPanel();
+  const { leads, courses, origins, courseTypes, leadStages, createLead, updateLead, isLoading } = useLeadsPanel();
 
   const handleSaveLead = (leadData: any) => {
-    const payload = { ...leadData, origin_id: leadData.origin, origin: undefined };
-    if (payload.id) {
-      updateLead.mutate(payload);
+    if (leadData.id) {
+      updateLead.mutate(leadData);
     } else {
-      createLead.mutate(payload);
+      createLead.mutate(leadData);
     }
   };
 
@@ -65,7 +64,7 @@ export default function LeadsPanel() {
       courseName: lead.courses?.name || 'N/A',
       origin: lead.origins?.name || 'N/A',
       status: lead.status || 'morno',
-      stage: lead.stage || 'contato',
+      stage: (lead.lead_stages?.name?.toLowerCase() as any) || 'contato',
       last_contact_at: lead.last_contact_at,
     }));
   }, [leads, searchTerm, statusFilter, cursoFilter]);
@@ -148,6 +147,8 @@ export default function LeadsPanel() {
         lead={selectedLead}
         courses={courses || []}
         origins={origins || []}
+        courseTypes={courseTypes || []}
+        leadStages={leadStages || []}
       />
     </div>
   );
