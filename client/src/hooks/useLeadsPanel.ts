@@ -18,7 +18,6 @@ export type LeadFromSupabase = {
   courses: { name: string; type_id: string; course_types: { name: string } | null } | null;
   origins: { name: string } | null;
   lead_stages: { name: string } | null;
-  profiles: { full_name: string } | null;
 };
 
 export function useLeadsPanel() {
@@ -33,7 +32,7 @@ export function useLeadsPanel() {
       
       let query = supabase
         .from("leads")
-        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name), profiles!owner_id(full_name)");
+        .select("*, courses(*, course_types(name)), origins(name), lead_stages(name)");
 
       // Se o usuário for do tipo 'Comercial', mostra apenas os leads dele.
       // Administradores e outros cargos podem ver todos os leads.
